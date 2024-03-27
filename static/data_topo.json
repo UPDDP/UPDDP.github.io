@@ -1,0 +1,1 @@
+{"dataset": ["tables", "network_and_trees", "fields", "geometry", "clusters_and_sets_and_lists", "text", "temporal", "media"], "category": ["categorical", "ordinal", "quantitative"], "direction": ["sequential", "diverging", "cyclic"]}
