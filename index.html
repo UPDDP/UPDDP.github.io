@@ -1,114 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <link rel="stylesheet" href="css/bootstrap.css" />
 
     <script src="js/jquery-3.7.1.min.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/d3.v7.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UPDDP</title>
 </head>
 
 <body>
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">UPDDP</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="about_id" href="#about" onclick="tabAbout()">
-                            About
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="explore_id" href="#explore" onclick="tabExplore()">
-                            Explore
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="pattern_id" href="#pattern" onclick="tabPattern()">
-                            Pattern Representation
-                        </a>
-                    </li>
-                    <li class=" nav-item">
-                        <a class="nav-link" id="corpus_id" href="#corpus" onclick="tabCorpus()">
-                            Research Corpus
-                        </a>
-                    </li>
-                </ul>
-
-            </div>
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">UPDDP</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" id="about_id" href="#about" onclick="tabAbout()">
+                        About
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="explore_id" href="#explore" onclick="tabExplore()">
+                        Explore
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="pattern_id" href="#pattern" onclick="tabPattern()">
+                        Pattern Representation
+                    </a>
+                </li>
+            <li class="nav-item">
+                <a class="nav-link" id="corpus_id" href="#corpus" onclick="tabCorpus()">
+                    Research Corpus
+                </a>
+            </li>
+            </ul>
+        </div>
         </div>
     </nav>
-    <div id="about" style="display: block">
-        about
-    </div>
-    <div id="explore" style="display: none">
-        explore
-    </div>
-    <div id="pattern" style="display: none">
-        pattern
-    </div>
-    <div id="corpus" style="display: none">
-        corpus
-    </div>
+    <div id="about" style="display: block">about</div>
+    <div id="explore" style="display: none">explore</div>
+    <div id="pattern" style="display: none">pattern</div>
+    <div id="corpus" style="display: none">corpus</div>
+    <script src="./script/net_work_cal.js"></script>
+    <script src="https://d3js.org/d3-queue.v3.min.js"></script>
     <script>
-        function tabAbout() {
-            document.getElementById("about").style.display = "block";
-            document.getElementById("explore").style.display = "none";
-            document.getElementById("pattern").style.display = "none";
-            document.getElementById("corpus").style.display = "none";
-            document.getElementsByClassName("nav-link")[0].classList.remove("active");
-            document.getElementsByClassName("nav-link")[1].classList.remove("active");
-            document.getElementsByClassName("nav-link")[2].classList.remove("active");
-            document.getElementsByClassName("nav-link")[3].classList.remove("active");
-            document.getElementsByClassName("nav-link")[0].classList.add("active");
-        }
-        function tabExplore() {
-            document.getElementById("about").style.display = "none";
-            document.getElementById("explore").style.display = "block";
-            document.getElementById("pattern").style.display = "none";
-            document.getElementById("corpus").style.display = "none";
-            document.getElementsByClassName("nav-link")[0].classList.remove("active");
-            document.getElementsByClassName("nav-link")[1].classList.remove("active");
-            document.getElementsByClassName("nav-link")[2].classList.remove("active");
-            document.getElementsByClassName("nav-link")[3].classList.remove("active");
-            document.getElementsByClassName("nav-link")[1].classList.add("active");
-        }
-        function tabPattern() {
-            document.getElementById("about").style.display = "none";
-            document.getElementById("explore").style.display = "none";
-            document.getElementById("pattern").style.display = "block";
-            document.getElementById("corpus").style.display = "none";
-            document.getElementsByClassName("nav-link")[0].classList.remove("active");
-            document.getElementsByClassName("nav-link")[1].classList.remove("active");
-            document.getElementsByClassName("nav-link")[2].classList.remove("active");
-            document.getElementsByClassName("nav-link")[3].classList.remove("active");
-            document.getElementsByClassName("nav-link")[2].classList.add("active");
 
-
-        }
-        function tabCorpus() {
-            document.getElementById("about").style.display = "none";
-            document.getElementById("explore").style.display = "none";
-            document.getElementById("pattern").style.display = "none";
-            document.getElementById("corpus").style.display = "block";
-            //document.getElementsByClassName("nav-link").setAttribute("class", "nav-link");
-            document.getElementsByClassName("nav-link")[0].classList.remove("active");
-            document.getElementsByClassName("nav-link")[1].classList.remove("active");
-            document.getElementsByClassName("nav-link")[2].classList.remove("active");
-            document.getElementsByClassName("nav-link")[3].classList.remove("active");
-            document.getElementsByClassName("nav-link")[3].classList.add("active");
-
-        }
     </script>
 </body>
-
 </html>
