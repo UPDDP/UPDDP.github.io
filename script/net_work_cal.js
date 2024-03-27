@@ -215,8 +215,8 @@ edge_building_unbalance = (data, topo) => {
             }
           }
         }
-        last_sol_code = sol_list_iter[j]
       }
+      last_sol_code = sol_list_iter[j]
     }
     req_data_topo = topo_merge(req_data_topo, req_data_topo_iter)
     data_sol_topo = topo_merge(data_sol_topo, data_sol_topo_iter)
@@ -327,8 +327,8 @@ edge_building_path = (data, topo) => {
             }
           }
         }
-        last_sol_code = sol_list_iter[j]
       }
+      last_sol_code = sol_list_iter[j]
     }
     factor = calcualte_link([
       req_data_topo_iter,
@@ -480,8 +480,8 @@ edge_building_requirement = (data, topo) => {
             }
           }
         }
-        last_sol_code = sol_list_iter[j]
       }
+      last_sol_code = sol_list_iter[j]
     }
 
     req_data_topo_req = topo_merge(req_data_topo_req, req_data_topo_iter)
@@ -625,9 +625,19 @@ edge_building_paper = (data, topo) => {
           sol_sol_topo_iter[last_sol_code[out_iter]][
             sol_list_iter[j][in_iter]
           ] += 1
+          if (sol_list_iter[j][in_iter] == last_sol_code[out_iter]) {
+            console.log(
+              sol_list_iter[j][in_iter],
+              last_sol_code[out_iter],
+              sol_list_iter,
+              last_sol_code,
+              j
+            )
+          }
         }
+
         for (let co_iter = 0; co_iter < sol_list_iter[j].length; co_iter++) {
-          if (in_iter != co_iter) {
+          if (sol_list_iter[j][in_iter] != sol_list_iter[j][co_iter]) {
             if (!(sol_list_iter[j][in_iter] in sol_sol_co_iter)) {
               sol_sol_co_iter[sol_list_iter[j][in_iter]] = {}
             }
@@ -647,8 +657,8 @@ edge_building_paper = (data, topo) => {
             }
           }
         }
-        last_sol_code = sol_list_iter[j]
       }
+      last_sol_code = sol_list_iter[j]
     }
 
     req_data_topo_paper = topo_merge(req_data_topo_paper, req_data_topo_iter)
@@ -735,6 +745,7 @@ function tabCorpus() {
     d3.json("./static/data_topo.json"),
     d3.json("./static/sol_topo.json")
   ]).then(([data, req_topo, data_topo, sol_topo]) => {
+    console.log(data)
     let topo_combina = topo_building(req_topo, data_topo, sol_topo)
     console.log(topo_combina)
     console.log(data)
@@ -742,6 +753,7 @@ function tabCorpus() {
     let req_data_list = dict2list(topo.req_data_topo)
     let data_sol_list = dict2list(topo.data_sol_topo)
     let sol_sol_list = dict2list(topo.sol_sol_topo)
+    let sol_sol_co_list = dict2list(topo.sol_sol_co)
     console.log(topo)
     console.log("req_data_list")
     console.log(req_data_list)
@@ -750,7 +762,12 @@ function tabCorpus() {
     console.log("sol_sol_list")
     console.log(sol_sol_list)
     let all_all_list = [...req_data_list, ...data_sol_list, ...sol_sol_list]
+    all_all_list.forEach((d) => (d["is_directional"] = 1))
+    sol_sol_co_list.forEach((d) => (d["is_directional"] = 0))
+    all_all_list = [...all_all_list, ...sol_sol_co_list]
     all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
+    console.log("g")
+    //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
     console.log(all_all_list)
     let scale_set = scale_set_create(topo_combina)
     let main_svg = d3.select("#corpus").append("svg")
@@ -771,6 +788,7 @@ function tabCorpus() {
       .attr("r", 5)
       .attr("opacity", (d) => d.weight / 10) */
     let node_list = topo_combina.all_list.map((d) => ({ ...d }))
+    console.log(node_list)
     let simulation = (d3.simulation = d3
       .forceSimulation()
       .nodes(node_list)
@@ -778,21 +796,59 @@ function tabCorpus() {
         "link",
         d3.forceLink(all_all_list).id((d) => d.id)
       )
-      .force("charge", d3.forceManyBody().strength(-1000))
+      .force("charge", d3.forceManyBody().strength(-800))
       .force("x", d3.forceX())
       .force("y", d3.forceY())).force(
       "center",
       d3.forceCenter(width / 2, height / 2)
     )
-    //console.log(node_list)
+
     const link = main_svg
       .append("g")
-      .attr("stroke", "#999")
-      .attr("stroke-opacity", 0.6)
-      .selectAll("line")
+      .selectAll("path")
       .data(all_all_list)
-      .join("line")
+      .join("path")
+      .attr(
+        "class",
+        (d) =>
+          `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
+      )
+      .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
+      .attr("stroke", link_color)
       .attr("stroke-width", (d) => Math.sqrt(d.weight))
+      .attr("fill", "none")
+      .attr("isCalled", "false")
+      .attr("d", (d) => linkArc(d))
+      .attr("marker-end", (d) => {
+        if (d.is_directional == 1) {
+          return `url(${new URL(
+            `#Topo_arrow_${d.source.id}_${d.target.id}`,
+            location
+          )})`
+        } else {
+        }
+      })
+    main_svg
+      .append("g")
+      .attr("class", "marker")
+      .selectAll("defs")
+      .data(all_all_list)
+      .join("defs")
+      .append("marker")
+      .attr("id", (d) => `Topo_arrow_${d.source.id}_${d.target.id}`)
+      .attr(
+        "class",
+        (d) => `Topo_arrow_strat_${d.source.id} Topo_arrow_end_${d.target.id}`
+      )
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 15)
+      .attr("refY", -0.5)
+      .attr("markerWidth", 4)
+      .attr("markerHeight", 5)
+      .attr("fill", (d) => "#999")
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
 
     const node = main_svg
       .append("g")
@@ -803,6 +859,7 @@ function tabCorpus() {
       .join("circle")
       .attr("r", 5)
       .attr("fill", (d) => scale_set.color_type(d.group))
+      .attr("class", (d) => `node node_${d.id}`)
 
     // Add a drag behavior.
     node.call(
@@ -815,11 +872,7 @@ function tabCorpus() {
 
     // Set the position attributes of links and nodes each time the simulation ticks.
     simulation.on("tick", () => {
-      link
-        .attr("x1", (d) => d.source.x)
-        .attr("y1", (d) => d.source.y)
-        .attr("x2", (d) => d.target.x)
-        .attr("y2", (d) => d.target.y)
+      link.attr("d", link_path)
 
       node.attr("cx", (d) => d.x).attr("cy", (d) => d.y)
     })
@@ -889,5 +942,58 @@ scale_set_create = (topo_combina) => {
     .scaleOrdinal()
     .domain([1, 2, 3])
     .range(["#1f77b4", "#ff7f0e", "#2ca02c"])
+
   return scale_set
+}
+
+net_link_graph = (
+  data,
+  width = 1000,
+  height = 1000,
+  margin = {
+    top: 20,
+    right: 30,
+    bottom: 40,
+    left: 30
+  }
+) => {}
+
+link_path = (d) => {
+  if (d.is_directional == 1) {
+    return linkArc(d)
+  } else {
+    return linkLine(d)
+  }
+}
+
+linkArc = (d) => {
+  const r = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y)
+  return `
+        M${d.source.x},${d.source.y}
+        A${r},${r} 0 0,1 ${d.target.x},${d.target.y}
+        `
+}
+
+linkLine = (d) => {
+  const path = d3.path()
+  path.moveTo(d.source.x, d.source.y)
+  path.lineTo(d.target.x, d.target.y)
+  return path.toString()
+}
+
+link_color = (d) => {
+  if (d.is_directional == 1) {
+    return "grey"
+  } else {
+    return "black"
+  }
+}
+
+// Consider excluding property
+// If it is TRUE, it will return path only with such property
+// Consider ignoring property
+// If it is true, it will transfer all qualified into required forms
+
+data_filter_req = (data, is_exclude=false,is_ignore=false) => {
+  data = d3.filter(data,d=>)
 }
