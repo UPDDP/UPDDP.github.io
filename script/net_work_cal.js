@@ -119,6 +119,103 @@ calcualte_link = (topo_list) => {
   return factor
 }
 
+calculate_matrix_paper = (
+  topo,
+  req_data_paper,
+  data_sol_paper,
+  sol_sol_paper,
+  req_paper,
+  data_paper,
+  sol_paper
+) => {
+  let req_data_topo = req_data_empty_topo_building(topo)
+  let data_sol_topo = data_sol_empty_topo_building(topo)
+  let sol_sol_topo = sol_sol_empty_topo_building(topo)
+  let sol_sol_co = sol_sol_empty_topo_building(topo)
+
+  let sol_list = new Set()
+
+  for (const [key_req, key_data_set] of Object.entries(req_data_paper)) {
+    key_data_set.forEach((key_data) => {
+      req_paper[key_req].forEach((req_cat) => {
+        data_paper[key_data].forEach((data_cat) => {
+          req_data_topo[req_cat][data_cat] += 1
+        })
+      })
+    })
+  }
+  for (const [key_data, key_sol_set] of Object.entries(data_sol_paper)) {
+    key_sol_set.forEach((key_sol) => {
+      sol_list.add(key_sol)
+      data_paper[key_data].forEach((data_cat) => {
+        if (key_sol.substring(0, 4) != "data") {
+          sol_paper[key_sol].forEach((sol_cat) => {
+            data_sol_topo[data_cat][sol_cat] += 1
+          })
+        } else {
+          data_sol_topo[data_cat][sol_paper[key_sol][0]] += 1
+          sol_paper[key_sol].forEach((sol_cat, index, sol_path) => {
+            if (index == 0) {
+              return
+            } else {
+              sol_sol_topo[sol_path[index - 1]][sol_cat] += 1
+            }
+          })
+        }
+      })
+    })
+  }
+
+  for (const [key_pre_sol, key_post_sol_set] of Object.entries(sol_sol_paper)) {
+    let key_pre_sol_cat_list = sol_paper[key_pre_sol]
+    if (key_pre_sol.substring(0, 4) == "data") {
+      key_pre_sol_cat_list = key_pre_sol_cat_list.slice(-1)
+    }
+    sol_list.add(key_pre_sol)
+    key_pre_sol_cat_list.forEach((pre_sol_cat) => {
+      key_post_sol_set.forEach((key_post_sol) => {
+        sol_list.add(key_post_sol)
+        if (key_post_sol.substring(0, 4) == "data") {
+          sol_sol_topo[pre_sol_cat][sol_paper[key_post_sol][0]] += 1
+          sol_paper[key_post_sol].forEach((sol_cat, index, sol_path) => {
+            if (index == 0) {
+              return
+            } else {
+              sol_sol_topo[sol_path[index - 1]][sol_cat] += 1
+            }
+          })
+        } else {
+          sol_paper[key_post_sol].forEach((post_sol_cat) => {
+            sol_sol_topo[pre_sol_cat][post_sol_cat] += 1
+          })
+        }
+      })
+    })
+  }
+  sol_list.forEach((key_sol) => {
+    if (key_sol.substring(0, 4) == "data") {
+      return
+    }
+    let sol_cat_list = new Set(sol_paper[key_sol])
+
+    sol_cat_list.forEach((pre_key, pre_index, arr) => {
+      arr.forEach((post_key, post_index, arr) => {
+        if (pre_index == post_index) {
+          return
+        }
+        sol_sol_co[pre_key][post_key] += 1
+      })
+    })
+  })
+
+  return {
+    req_data_topo,
+    data_sol_topo,
+    sol_sol_topo,
+    sol_sol_co
+  }
+}
+
 edge_building_unbalance = (data, topo) => {
   let req_data_topo = req_data_empty_topo_building(topo)
   let data_sol_topo = data_sol_empty_topo_building(topo)
@@ -223,7 +320,7 @@ edge_building_unbalance = (data, topo) => {
     sol_sol_topo = topo_merge(sol_sol_topo, sol_sol_topo_iter)
     sol_sol_co = topo_merge(sol_sol_co, sol_sol_co_iter)
   }
-  console.log(req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co)
+
   return { req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co }
 }
 
@@ -625,15 +722,6 @@ edge_building_paper = (data, topo) => {
           sol_sol_topo_iter[last_sol_code[out_iter]][
             sol_list_iter[j][in_iter]
           ] += 1
-          if (sol_list_iter[j][in_iter] == last_sol_code[out_iter]) {
-            console.log(
-              sol_list_iter[j][in_iter],
-              last_sol_code[out_iter],
-              sol_list_iter,
-              last_sol_code,
-              j
-            )
-          }
         }
 
         for (let co_iter = 0; co_iter < sol_list_iter[j].length; co_iter++) {
@@ -694,6 +782,125 @@ edge_building_paper = (data, topo) => {
   return { req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co }
 }
 
+edge_building_matrix_paper = (data, topo) => {
+  let last_title = ""
+  let req_data_topo = req_data_empty_topo_building(topo)
+  let data_sol_topo = data_sol_empty_topo_building(topo)
+  let sol_sol_topo = sol_sol_empty_topo_building(topo)
+  let sol_sol_co = sol_sol_empty_topo_building(topo)
+  let req_data_paper = {}
+  let data_sol_paper = {}
+  let sol_sol_paper = {}
+  let req_paper = {}
+  let data_paper = {}
+  let sol_paper = {}
+  for (let index = 0; index < data.length; index++) {
+    let data_iter = data[index]
+    if (last_title != data_iter.paper_title) {
+      // Deal with combine
+
+      let a = calculate_matrix_paper(
+        topo,
+        req_data_paper,
+        data_sol_paper,
+        sol_sol_paper,
+        req_paper,
+        data_paper,
+        sol_paper
+      )
+
+      req_data_topo = topo_merge(req_data_topo, a.req_data_topo)
+      data_sol_topo = topo_merge(data_sol_topo, a.data_sol_topo)
+      sol_sol_topo = topo_merge(sol_sol_topo, a.sol_sol_topo)
+      sol_sol_co = topo_merge(sol_sol_co, a.sol_sol_co)
+      req_data_paper = {}
+      data_sol_paper = {}
+      sol_sol_paper = {}
+      req_paper = {}
+      data_paper = {}
+      sol_paper = {}
+      last_title = data_iter.paper_title
+    }
+
+    let req_node = data_iter.requirement
+    req_node.requirement_code = Object.keys(req_node.requirement_code)
+    if (!(req_node.requirement_text in req_paper)) {
+      req_paper[req_node.requirement_text] = req_node.requirement_code
+    }
+    let data_node = data_iter.data
+    data_node.data_code = new Set(Object.keys(data_node.data_code))
+    if (!(data_node.data_text in data_paper)) {
+      data_paper[data_node.data_text] = new Set([...data_node.data_code])
+    }
+    data_paper[data_node.data_text] = new Set([
+      ...data_node.data_code,
+      ...data_paper[data_node.data_text]
+    ])
+
+    if (!(req_node.requirement_text in req_data_paper)) {
+      req_data_paper[req_node.requirement_text] = new Set()
+    }
+
+    req_data_paper[req_node.requirement_text].add(data_node.data_text)
+    for (let i = 0; i < data_iter.solution.length; i++) {
+      let solution_node = {}
+      solution_node["solution_text"] =
+        data_iter.solution[i].solution_category +
+        data_iter.solution[i].solution_text
+      solution_node["solution_code"] = data_iter.solution[i].componenet_code
+      sol_paper[solution_node.solution_text] = solution_node.solution_code
+    }
+
+    for (let i = 0; i < data_iter.solution.length; i++) {
+      if (i == 0) {
+        if (!(data_iter.data.data_text in data_sol_paper)) {
+          data_sol_paper[data_iter.data.data_text] = new Set()
+        }
+        data_sol_paper[data_iter.data.data_text].add(
+          data_iter.solution[i].solution_category +
+            data_iter.solution[i].solution_text
+        )
+      } else {
+        if (
+          !(
+            data_iter.solution[i - 1].solution_category +
+              data_iter.solution[i - 1].solution_text in
+            sol_sol_paper
+          )
+        ) {
+          sol_sol_paper[
+            data_iter.solution[i - 1].solution_category +
+              data_iter.solution[i - 1].solution_text
+          ] = new Set()
+        }
+        sol_sol_paper[
+          data_iter.solution[i - 1].solution_category +
+            data_iter.solution[i - 1].solution_text
+        ].add(
+          data_iter.solution[i].solution_category +
+            data_iter.solution[i].solution_text
+        )
+      }
+    }
+  }
+
+  let a = calculate_matrix_paper(
+    topo,
+    req_data_paper,
+    data_sol_paper,
+    sol_sol_paper,
+    req_paper,
+    data_paper,
+    sol_paper
+  )
+
+  req_data_topo = topo_merge(req_data_topo, a.req_data_topo)
+  data_sol_topo = topo_merge(data_sol_topo, a.data_sol_topo)
+  sol_sol_topo = topo_merge(sol_sol_topo, a.sol_sol_topo)
+  sol_sol_co = topo_merge(sol_sol_co, a.sol_sol_co)
+  return { req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co }
+}
+
 function tabAbout() {
   document.getElementById("about").style.display = "block"
   document.getElementById("explore").style.display = "none"
@@ -746,30 +953,24 @@ function tabCorpus() {
     d3.json("./static/sol_topo.json")
   ]).then(([data, req_topo, data_topo, sol_topo]) => {
     let topo_combina = topo_building(req_topo, data_topo, sol_topo)
+    console.log(data)
     console.log(topo_combina)
-    console.log(data)
     data = data_filter_req(data, "discover_observation", false, true)
-    console.log(data)
+
     let topo = edge_building_matrix_paper(data, topo_combina)
     let req_data_list = dict2list(topo.req_data_topo)
     let data_sol_list = dict2list(topo.data_sol_topo)
     let sol_sol_list = dict2list(topo.sol_sol_topo)
     let sol_sol_co_list = dict2list(topo.sol_sol_co)
-    console.log(topo)
-    console.log("req_data_list")
-    console.log(req_data_list)
-    console.log("data_sol_list")
-    console.log(data_sol_list)
-    console.log("sol_sol_list")
-    console.log(sol_sol_list)
+
     let all_all_list = [...req_data_list, ...data_sol_list, ...sol_sol_list]
     all_all_list.forEach((d) => (d["is_directional"] = 1))
     sol_sol_co_list.forEach((d) => (d["is_directional"] = 0))
     all_all_list = [...all_all_list, ...sol_sol_co_list]
     all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
-    console.log("g")
+
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
-    console.log(all_all_list)
+
     let scale_set = scale_set_create(topo_combina)
     let main_svg = d3.select("#corpus").append("svg")
     let width = 1000
@@ -789,7 +990,7 @@ function tabCorpus() {
       .attr("r", 5)
       .attr("opacity", (d) => d.weight / 10) */
     let node_list = topo_combina.all_list.map((d) => ({ ...d }))
-    console.log(node_list)
+
     let simulation = (d3.simulation = d3
       .forceSimulation()
       .nodes(node_list)
@@ -1010,7 +1211,7 @@ data_filter_req = (
       ? req_iter_filter_exclude(d, key_word_list)
       : req_iter_filter_not_exclude(d, key_word_list)
   )
-  //console.log(data)
+
   if (is_pure) {
     data.forEach(
       (d) => (d.requirement.requirement_code = req_iter_pure(d, key_word_list))
@@ -1020,7 +1221,6 @@ data_filter_req = (
 }
 req_iter_filter_exclude = (d, key_word_list) => {
   for (let i in key_word_list) {
-    //console.log(i, Object.keys(d.requirement.requirement_code))
     if (!(key_word_list[i] in d.requirement.requirement_code)) {
       return false
     }
@@ -1029,12 +1229,6 @@ req_iter_filter_exclude = (d, key_word_list) => {
 }
 req_iter_filter_not_exclude = (d, key_word_list) => {
   for (let i in key_word_list) {
-    /*   console.log(
-      i,
-      key_word_list[i],
-      Object.keys(d.requirement.requirement_code),
-      key_word_list[i] in d.requirement.requirement_code
-    ) */
     if (key_word_list[i] in d.requirement.requirement_code) {
       return true
     }
