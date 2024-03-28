@@ -1,3 +1,38 @@
+let filter_list = []
+
+set_directional_edge = (node) => {
+  node
+    .attr(
+      "class",
+      (d) =>
+        `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
+    )
+    .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
+    .attr("stroke", link_color)
+    .attr("stroke-width", (d) => Math.sqrt(d.weight))
+    .attr("fill", "none")
+    .attr("isCalled", "false")
+    .attr("d", (d) => link_path(d))
+    .attr("marker-end", (d) => {
+      if (d.is_directional == 1) {
+        return `url(${new URL(
+          `#Topo_arrow_${d.source.id}_${d.target.id}`,
+          location
+        )})`
+      } else {
+      }
+    })
+}
+
+link_color = (d) => {
+  if (d.is_directional == 1) {
+    return "grey"
+  } else {
+    return "black"
+  }
+}
+
+set_connection_edge = (node) => {}
 topo_building = (req, data, sol) => {
   let topo = {
     req_list: req,
@@ -97,7 +132,6 @@ sol_sol_empty_topo_building = (topo) => {
 }
 
 calcualte_link = (topo_list) => {
-  data = data_filter_req(data, "discover_observation", false, true)
   let factor = 0
   for (let i = 0; i < topo_list.length; i++) {
     let out_key_list = Object.keys(topo_list[i])
@@ -120,12 +154,52 @@ calcualte_link = (topo_list) => {
   return factor
 }
 
-data_process = (data) => {
-  return data_filter_req(data, "discover_observation", false, true)
+/*
+
+filter_list should be composed by a list of dict
+dict should be like
+{
+  type:"interaction",
+  key_word_list:['xx'],
+  is_exclude:false,
+  is_pure:false
 }
 
-upd_all_all_list = (data, topo_combination) => {
-  let topo = edge_building_from_original_data(data, topo_combination)
+*/
+data_process = (data, filter_list = []) => {
+  filter_list.forEach((filter_iter) => {
+    if (filter_iter.type == "requirement") {
+      data = data_filter_req(
+        data,
+        filter_iter.key_word_list,
+        filter_iter.is_exclude,
+        filter_iter.is_pure
+      )
+    } else if (filter_iter.type == "data") {
+      data = data_filter_data(
+        data,
+        filter_iter.key_word_list,
+        filter_iter.is_exclude,
+        filter_iter.is_pure
+      )
+    } else {
+      data = data_filter_sol(
+        data,
+        filter_iter.key_word_list,
+        filter_iter.is_exclude,
+        filter_iter.is_pure,
+        filter_iter.position
+      )
+    }
+  })
+  return data
+}
+
+upd_all_all_list = (data, topo_combination, filter_dict = []) => {
+  data = data_process(data, filter_dict)
+  console.log(data)
+  let topo = edge_building_matrix_paper(data, topo_combination)
+
   return link_building(topo)
 }
 
@@ -143,7 +217,6 @@ link_building = (topo) => {
   return all_all_list
 }
 //
-pre_procedure = (data_original, req_topo, data_topo, sol_topo) => {}
 
 calculate_matrix_paper = (
   topo,
@@ -240,11 +313,6 @@ calculate_matrix_paper = (
     sol_sol_topo,
     sol_sol_co
   }
-}
-
-edge_building_from_original_data = (data_original, topo_combination) => {
-  let data = data_process(data_original)
-  return edge_building_matrix_paper(data, topo_combination)
 }
 
 edge_building_unbalance = (data, topo) => {
@@ -985,7 +1053,21 @@ function tabCorpus() {
   ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
     let topo_combination = topo_building(req_topo, data_topo, sol_topo)
 
-    let all_all_list = upd_all_all_list(data_original,topo_combination)
+    let all_all_list = upd_all_all_list(data_original, topo_combination, [
+      {
+        type: "requirement",
+        key_word_list: ["discover_observation"],
+        is_exclude: false,
+        is_pure: false
+      },
+      {
+        type: "data",
+        key_word_list: ["temporal"],
+        is_exclude: false,
+        is_pure: false,
+        position: 0
+      }
+    ])
 
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
 
@@ -1021,7 +1103,7 @@ function tabCorpus() {
       .selectAll("path")
       .data(all_all_list)
       .join("path")
-      .attr(
+    /*       .attr(
         "class",
         (d) =>
           `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
@@ -1040,7 +1122,8 @@ function tabCorpus() {
           )})`
         } else {
         }
-      })
+      }) */
+    set_directional_edge(link)
     main_svg
       .append("g")
       .attr("class", "marker")
@@ -1072,12 +1155,8 @@ function tabCorpus() {
       .attr("r", 5)
       .attr("fill", (d) => scale_set.color_type(d.group))
       .attr("class", (d) => `node node_${d.id}`)
-      .on("mouseover", (event, d) => {
+      .on("click", (event, d) => {
         console.log(event, d)
-        all_all_list = d3.filter(
-          all_all_list,
-          (link) => link.source.id == d.id || link.target.id == d.id
-        )
       })
 
     // Add a drag behavior.
@@ -1200,14 +1279,6 @@ linkLine = (d) => {
   return path.toString()
 }
 
-link_color = (d) => {
-  if (d.is_directional == 1) {
-    return "grey"
-  } else {
-    return "black"
-  }
-}
-
 // Consider excluding property
 // If it is TRUE, it will return path only with such property
 // Consider ignoring property
@@ -1264,4 +1335,126 @@ req_iter_pure = (d, key_word_list) => {
     rq_dict[keys[i]] = 1
   }
   return rq_dict
+}
+
+data_filter_data = (
+  data,
+  key_word_list,
+  is_exclude = false,
+  is_pure = false
+) => {
+  if (typeof key_word_list == "string") {
+    key_word_list = [key_word_list]
+  }
+  key_word_list = Array.from(key_word_list)
+  data = d3.filter(data, (d) =>
+    is_exclude
+      ? data_iter_filter_exclude(d, key_word_list)
+      : data_iter_filter_not_exclude(d, key_word_list)
+  )
+  if (is_pure) {
+    data.forEach((d) => (d.data.data_code = data_iter_pure(d, key_word_list)))
+  }
+  return data
+}
+
+data_iter_filter_exclude = (d, key_word_list) => {
+  for (let i in key_word_list) {
+    if (!(key_word_list[i] in d.data.data_code)) {
+      return false
+    }
+  }
+  return true
+}
+data_iter_filter_not_exclude = (d, key_word_list) => {
+  for (let i in key_word_list) {
+    if (key_word_list[i] in d.data.data_code) {
+      return true
+    }
+  }
+  return false
+}
+
+data_iter_pure = (d, key_word_list) => {
+  let keys = d3.filter(
+    Object.keys(d.data.data_code),
+    (d) => key_word_list.indexOf(d) != -1
+  )
+  let data_set = {}
+  for (let i in keys) {
+    data_set[keys[i]] = 1
+  }
+  return data_set
+}
+
+data_filter_sol = (
+  data,
+  key_word_list,
+  is_exclude = false,
+  is_pure = false,
+  position = -1
+) => {
+  if (typeof key_word_list == "string") {
+    key_word_list = [key_word_list]
+  }
+  key_word_list = Array.from(key_word_list)
+
+  data = d3.filter(data, (d) =>
+    is_exclude
+      ? sol_iter_filter_exclude(d, key_word_list, position)
+      : sol_iter_filter_not_exclude(d, key_word_list, position)
+  )
+  if (is_pure) {
+    data.forEach(
+      (d) => (d.data.solution_code = sol_iter_pure(d, key_word_list, position))
+    )
+  }
+  return data
+}
+
+sol_iter_filter_exclude = (d, key_word_list, position) => {
+  if (position >= d.solution.length) {
+    return false
+  }
+
+  if (position == -1) {
+  } else {
+    for (let i in key_word_list) {
+      if (
+        !(d.solution[position].componenet_code.indexOf(key_word_list[i]) != -1)
+      ) {
+        return false
+      }
+    }
+    return true
+  }
+}
+sol_iter_filter_not_exclude = (d, key_word_list, position) => {
+  if (position >= d.solution.length) {
+    return false
+  }
+
+  if (position == -1) {
+  } else {
+    for (let i in key_word_list) {
+      if (
+        d.solution[position].componenet_code.indexOf(key_word_list[i]) != -1
+      ) {
+        return true
+      }
+    }
+    return false
+  }
+}
+
+sol_iter_pure = (d, key_word_list, position) => {
+  let keys = d3.filter(
+    Object.keys(d.data.data_code),
+    (d) => key_word_list.indexOf(d) != -1
+  )
+  let data_set = {}
+  for (let i in keys) {
+    data_set[keys[i]] = 1
+  }
+  return data_set
 }
