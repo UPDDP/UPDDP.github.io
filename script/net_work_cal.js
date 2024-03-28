@@ -97,6 +97,7 @@ sol_sol_empty_topo_building = (topo) => {
 }
 
 calcualte_link = (topo_list) => {
+  data = data_filter_req(data, "discover_observation", false, true)
   let factor = 0
   for (let i = 0; i < topo_list.length; i++) {
     let out_key_list = Object.keys(topo_list[i])
@@ -119,7 +120,16 @@ calcualte_link = (topo_list) => {
   return factor
 }
 
-link_building = (data, topo) => {
+data_process = (data) => {
+  return data_filter_req(data, "discover_observation", false, true)
+}
+
+upd_all_all_list = (data, topo_combination) => {
+  let topo = edge_building_from_original_data(data, topo_combination)
+  return link_building(topo)
+}
+
+link_building = (topo) => {
   let req_data_list = dict2list(topo.req_data_topo)
   let data_sol_list = dict2list(topo.data_sol_topo)
   let sol_sol_list = dict2list(topo.sol_sol_topo)
@@ -132,6 +142,8 @@ link_building = (data, topo) => {
   all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
   return all_all_list
 }
+//
+pre_procedure = (data_original, req_topo, data_topo, sol_topo) => {}
 
 calculate_matrix_paper = (
   topo,
@@ -228,6 +240,11 @@ calculate_matrix_paper = (
     sol_sol_topo,
     sol_sol_co
   }
+}
+
+edge_building_from_original_data = (data_original, topo_combination) => {
+  let data = data_process(data_original)
+  return edge_building_matrix_paper(data, topo_combination)
 }
 
 edge_building_unbalance = (data, topo) => {
@@ -965,19 +982,14 @@ function tabCorpus() {
     d3.json("./static/requirement_topo.json"),
     d3.json("./static/data_topo.json"),
     d3.json("./static/sol_topo.json")
-  ]).then(([data, req_topo, data_topo, sol_topo]) => {
-    let topo_combina = topo_building(req_topo, data_topo, sol_topo)
-    console.log(data)
-    console.log(topo_combina)
-    data = data_filter_req(data, "discover_observation", false, true)
+  ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
+    let topo_combination = topo_building(req_topo, data_topo, sol_topo)
 
-    let topo = edge_building_matrix_paper(data, topo_combina)
-
-    let all_all_list = link_building(data, topo)
+    let all_all_list = upd_all_all_list(data_original,topo_combination)
 
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
 
-    let scale_set = scale_set_create(topo_combina)
+    let scale_set = scale_set_create(topo_combination)
     let main_svg = d3.select("#corpus").append("svg")
     let width = 1000
     let height = 1000
@@ -987,7 +999,7 @@ function tabCorpus() {
       .attr("width", width)
       .attr("height", height)
 
-    let node_list = topo_combina.all_list.map((d) => ({ ...d }))
+    let node_list = topo_combination.all_list.map((d) => ({ ...d }))
 
     let simulation = (d3.simulation = d3
       .forceSimulation()
@@ -1005,6 +1017,7 @@ function tabCorpus() {
 
     const link = main_svg
       .append("g")
+      .attr("class", "links")
       .selectAll("path")
       .data(all_all_list)
       .join("path")
@@ -1049,17 +1062,23 @@ function tabCorpus() {
       .attr("orient", "auto")
       .append("path")
       .attr("d", "M0,-5L10,0L0,5")
-
+    console.log(all_all_list)
     const node = main_svg
       .append("g")
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 1.5)
+      .attr("class", "nodes")
       .selectAll("circle")
       .data(node_list)
       .join("circle")
       .attr("r", 5)
       .attr("fill", (d) => scale_set.color_type(d.group))
       .attr("class", (d) => `node node_${d.id}`)
+      .on("mouseover", (event, d) => {
+        console.log(event, d)
+        all_all_list = d3.filter(
+          all_all_list,
+          (link) => link.source.id == d.id || link.target.id == d.id
+        )
+      })
 
     // Add a drag behavior.
     node.call(
@@ -1124,20 +1143,20 @@ dict2list = (dict) => {
   return list
 }
 
-scale_set_create = (topo_combina) => {
+scale_set_create = (topo_combination) => {
   let scale_set = {}
   scale_set["req"] = d3
     .scaleOrdinal()
-    .domain(topo_combina.req_list)
-    .range(Array.from(Array(topo_combina.req_list.length - 1).keys()))
+    .domain(topo_combination.req_list)
+    .range(Array.from(Array(topo_combination.req_list.length - 1).keys()))
   scale_set["data"] = d3
     .scaleOrdinal()
-    .domain(topo_combina.data_list)
-    .range(Array.from(Array(topo_combina.data_list.length - 1).keys()))
+    .domain(topo_combination.data_list)
+    .range(Array.from(Array(topo_combination.data_list.length - 1).keys()))
   scale_set["sol"] = d3
     .scaleOrdinal()
-    .domain(topo_combina.sol_list)
-    .range(Array.from(Array(topo_combina.sol_list.length - 1).keys()))
+    .domain(topo_combination.sol_list)
+    .range(Array.from(Array(topo_combination.sol_list.length - 1).keys()))
   scale_set["color_type"] = d3
     .scaleOrdinal()
     .domain([1, 2, 3])
