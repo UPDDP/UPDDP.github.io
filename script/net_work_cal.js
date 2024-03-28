@@ -119,6 +119,20 @@ calcualte_link = (topo_list) => {
   return factor
 }
 
+link_building = (data, topo) => {
+  let req_data_list = dict2list(topo.req_data_topo)
+  let data_sol_list = dict2list(topo.data_sol_topo)
+  let sol_sol_list = dict2list(topo.sol_sol_topo)
+  let sol_sol_co_list = dict2list(topo.sol_sol_co)
+
+  let all_all_list = [...req_data_list, ...data_sol_list, ...sol_sol_list]
+  all_all_list.forEach((d) => (d["is_directional"] = 1))
+  sol_sol_co_list.forEach((d) => (d["is_directional"] = 0))
+  all_all_list = [...all_all_list, ...sol_sol_co_list]
+  all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
+  return all_all_list
+}
+
 calculate_matrix_paper = (
   topo,
   req_data_paper,
@@ -958,16 +972,8 @@ function tabCorpus() {
     data = data_filter_req(data, "discover_observation", false, true)
 
     let topo = edge_building_matrix_paper(data, topo_combina)
-    let req_data_list = dict2list(topo.req_data_topo)
-    let data_sol_list = dict2list(topo.data_sol_topo)
-    let sol_sol_list = dict2list(topo.sol_sol_topo)
-    let sol_sol_co_list = dict2list(topo.sol_sol_co)
 
-    let all_all_list = [...req_data_list, ...data_sol_list, ...sol_sol_list]
-    all_all_list.forEach((d) => (d["is_directional"] = 1))
-    sol_sol_co_list.forEach((d) => (d["is_directional"] = 0))
-    all_all_list = [...all_all_list, ...sol_sol_co_list]
-    all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
+    let all_all_list = link_building(data, topo)
 
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
 
@@ -980,15 +986,7 @@ function tabCorpus() {
       .attr("height", height)
       .attr("width", width)
       .attr("height", height)
-    /*     main_svg
-      .selectAll("circle")
-      .data(req_data_list)
-      .join("circle")
-      .attr("cx", (d) => scale_set.req(d.out_key) * 20 + 20)
-      .attr("cy", (d) => scale_set.data(d.in_key) * 20 + 20)
-      .attr("fill", "red ")
-      .attr("r", 5)
-      .attr("opacity", (d) => d.weight / 10) */
+
     let node_list = topo_combina.all_list.map((d) => ({ ...d }))
 
     let simulation = (d3.simulation = d3
