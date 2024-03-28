@@ -745,11 +745,12 @@ function tabCorpus() {
     d3.json("./static/data_topo.json"),
     d3.json("./static/sol_topo.json")
   ]).then(([data, req_topo, data_topo, sol_topo]) => {
-    console.log(data)
     let topo_combina = topo_building(req_topo, data_topo, sol_topo)
     console.log(topo_combina)
     console.log(data)
-    let topo = edge_building_unbalance(data, topo_combina)
+    data = data_filter_req(data, "discover_observation", false, true)
+    console.log(data)
+    let topo = edge_building_matrix_paper(data, topo_combina)
     let req_data_list = dict2list(topo.req_data_topo)
     let data_sol_list = dict2list(topo.data_sol_topo)
     let sol_sol_list = dict2list(topo.sol_sol_topo)
@@ -994,6 +995,62 @@ link_color = (d) => {
 // Consider ignoring property
 // If it is true, it will transfer all qualified into required forms
 
-data_filter_req = (data, is_exclude=false,is_ignore=false) => {
-  data = d3.filter(data,d=>)
+data_filter_req = (
+  data,
+  key_word_list,
+  is_exclude = false,
+  is_pure = false
+) => {
+  if (typeof key_word_list == "string") {
+    key_word_list = [key_word_list]
+  }
+  key_word_list = Array.from(key_word_list)
+  data = d3.filter(data, (d) =>
+    is_exclude
+      ? req_iter_filter_exclude(d, key_word_list)
+      : req_iter_filter_not_exclude(d, key_word_list)
+  )
+  //console.log(data)
+  if (is_pure) {
+    data.forEach(
+      (d) => (d.requirement.requirement_code = req_iter_pure(d, key_word_list))
+    )
+  }
+  return data
+}
+req_iter_filter_exclude = (d, key_word_list) => {
+  for (let i in key_word_list) {
+    //console.log(i, Object.keys(d.requirement.requirement_code))
+    if (!(key_word_list[i] in d.requirement.requirement_code)) {
+      return false
+    }
+  }
+  return true
+}
+req_iter_filter_not_exclude = (d, key_word_list) => {
+  for (let i in key_word_list) {
+    /*   console.log(
+      i,
+      key_word_list[i],
+      Object.keys(d.requirement.requirement_code),
+      key_word_list[i] in d.requirement.requirement_code
+    ) */
+    if (key_word_list[i] in d.requirement.requirement_code) {
+      return true
+    }
+  }
+  return false
+}
+
+req_iter_pure = (d, key_word_list) => {
+  let keys = d3.filter(
+    Object.keys(d.requirement.requirement_code),
+    (d) => key_word_list.indexOf(d) != -1
+  )
+  let rq_dict = {}
+
+  for (let i in keys) {
+    rq_dict[keys[i]] = 1
+  }
+  return rq_dict
 }
