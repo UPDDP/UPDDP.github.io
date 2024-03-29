@@ -1,12 +1,8 @@
 let filter_list = []
 
-set_directional_edge = (node, scale_set) => {
+set_directional_edge = (id, node, scale_set) => {
   node
-    .attr(
-      "class",
-      (d) =>
-        `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
-    )
+    .attr("class", (d) => create_class_edge(id, d))
     .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
     .attr("stroke", link_color)
     .attr("stroke-width", (d) => Math.sqrt(d.weight))
@@ -24,19 +20,28 @@ set_directional_edge = (node, scale_set) => {
     })
     .on("mouseover", (event, d) => {
       console.log(event, d)
-      add_tool_tip(d, event.clientX, event.clientY, "link")
+      add_tool_tip(id, d, event.clientX, event.clientY, "link")
     })
     .on("mouseout", (event, d) => {
       d3.select("#corpus").select("#custom_tooltip").remove()
     })
 }
 
+create_class_edge = (id, d) => {
+  switch (id) {
+    case "#corpus":
+      return `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
+    case "#pattern":
+      return `lines Topo_line_target_${d.target} Topo_line_source_${d.source}`
+  }
+}
+
 /*
 
 */
-add_tool_tip = (d, x, y, type) => {
-  d3.select("#corpus").select("#custom_tooltip").remove()
-  d3.select("#corpus")
+add_tool_tip = (id, d, x, y, type) => {
+  d3.select(id).select("#custom_tooltip").remove()
+  d3.select(id)
     .append("div")
     .attr("id", "custom_tooltip")
     .attr("class", "custom_tooltip bg-violet")
@@ -46,18 +51,24 @@ add_tool_tip = (d, x, y, type) => {
     .style("border-width", "2px")
     .style("border-radius", "5px")
     .style("padding", "5px")
-    .html(tooltip_html(d, type))
+    .html(tooltip_html(id, d, type))
     .style("left", x + 70 + "px")
     .style("top", y + "px")
 }
 
-tooltip_html = (d, type) => {
+tooltip_html = (id, d, type) => {
   switch (type) {
     case "node":
       return `This type is: ${d.id} <br/> It's weight is ${d.weight}`
       break
     case "link":
-      return `This link is from ${d.source.id} to ${d.target.id} <br/> It's weight is ${d.weight}`
+      switch (id) {
+        case "#corpus":
+          return `This link is from ${d.source.id} to ${d.target.id} <br/> It's weight is ${d.weight}`
+        case "#pattern":
+          return `This link is from ${d.source} to ${d.target} <br/> It's weight is ${d.weight}`
+      }
+
       break
     default:
       break
@@ -305,7 +316,8 @@ upd_all_all_list = (
 ) => {
   data = data_process(data, filter_dict)
   let topo = edge_building_matrix_paper(data, topo_combination)
-
+  console.log(topo)
+  console.log(link_building(topo, is_filter_zero_weight_link))
   return link_building(topo, is_filter_zero_weight_link)
 }
 
@@ -314,7 +326,7 @@ link_building = (topo, is_filter_zero_weight_link = true) => {
   let data_sol_list = dict2list(topo.data_sol_topo)
   let sol_sol_list = dict2list(topo.sol_sol_topo)
   let sol_sol_co_list = dict2list_co(topo.sol_sol_co)
-
+  console.log(req_data_list)
   let all_all_list = [...req_data_list, ...data_sol_list, ...sol_sol_list]
   all_all_list.forEach((d) => (d["is_directional"] = 1))
   sol_sol_co_list.forEach((d) => (d["is_directional"] = 0))
@@ -1206,6 +1218,7 @@ function tabPattern() {
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
     let node_list = topo_combination.all_list.map((d) => ({ ...d }))
     let scale_set = scale_set_create(topo_combination, all_all_list)
+    console.log(all_all_list)
     all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 1)
     all_all_list = link_complement(all_all_list, topo_combination.all_list)
     /*     console.log(new Set(all_all_list.map((d) => d.source)))
@@ -1214,6 +1227,49 @@ function tabPattern() {
       new Set(all_all_list.map((d) => d.source)) -
         new Set(all_all_list.map((d) => d.target))
     ) */
+
+    console.log(node_list)
+    node_list_reorder = d3.map(node_list, (d, index) => {
+      return { name: d.id, weight: +0, index: +index }
+    })
+    all_all_list_reorder = d3.map(all_all_list, (original, index) => {
+      return {
+        source: d3.filter(
+          node_list_reorder,
+          (d) => d.name == original.source
+        )[0], //{ name: d.source, weight: +0 },
+        target: d3.filter(
+          node_list_reorder,
+          (d) => d.name == original.target
+        )[0],
+        value: original.weight,
+        index: +index,
+        distance: +0
+      }
+    })
+    console.log(node_list, all_all_list)
+    console.log(node_list_reorder, all_all_list_reorder)
+    var graph = reorder
+      .graph()
+      .nodes(node_list_reorder)
+      .links(all_all_list_reorder)
+      .init()
+    let dist_adjacency
+    const leafOrder = reorder
+      .optimal_leaf_order()
+      .distance(reorder.distance["manhattan"])
+    function computeLeaforder() {
+      const adjacency = reorder.graph2mat(graph)
+      return leafOrder(adjacency)
+    }
+    function computeRCM() {
+      return reorder.reverse_cuthill_mckee_order(graph)
+    }
+    let new_order = computeRCM()
+    new_order = Array.from(
+      Array(topo_combination.all_list.length - 1).keys()
+    )[0]
+    console.log(new_order)
     let main_svg = d3.select("#pattern").append("svg")
     let width = 1000
     let height = 1000
@@ -1228,15 +1284,21 @@ function tabPattern() {
       .selectAll("rect")
       .data(all_all_list)
       .join("rect")
-      .attr("x", (d) => scale_set.all_ordinal(d.target) * 10 + 1)
-      .attr("y", (d) => scale_set.all_ordinal(d.source) * 10 + 1)
+      .attr("x", (d) => new_order[scale_set.all_ordinal(d.target)] * 10 + 1)
+      .attr("y", (d) => new_order[scale_set.all_ordinal(d.source)] * 10 + 1)
       .attr("width", 8)
       .attr("height", 8)
       .attr("fill", "red")
       .attr("opacity", (d) => scale_set.all_linear_range(d.weight))
       .attr("stroke", "grey")
-
-    console.log(topo_combination, all_all_list)
+      .on("mouseover", (event, d) => {
+        //console.log(event, d)
+        //console.log(d)
+        add_tool_tip("#pattern", d, event.clientX, event.clientY, "link")
+      })
+      .on("mouseout", (event, d) => {
+        d3.select("#pattern").select("#custom_tooltip").remove()
+      })
   })
 }
 
@@ -1262,10 +1324,11 @@ function tabCorpus() {
     let topo_combination = topo_building(req_topo, data_topo, sol_topo)
 
     let all_all_list = upd_all_all_list(data_original, topo_combination)
+    console.log(all_all_list)
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
     let node_list = topo_combination.all_list.map((d) => ({ ...d }))
     let scale_set = scale_set_create(topo_combination, all_all_list)
-
+    console.log(all_all_list)
     let main_svg = d3.select("#corpus").append("svg")
     let width = 1000
     let height = 1000
@@ -1315,7 +1378,7 @@ function tabCorpus() {
         } else {
         }
       }) */
-    set_directional_edge(link, set_directional_edge)
+    set_directional_edge("#corpus", link, scale_set)
     main_svg
       .append("g")
       .attr("class", "marker")
@@ -1352,7 +1415,7 @@ function tabCorpus() {
       })
       .on("mouseover", (event, d) => {
         console.log(event, d)
-        add_tool_tip(d, event.clientX, event.clientY, "node")
+        add_tool_tip("#corpus", d, event.clientX, event.clientY, "node")
       })
       .on("mouseout", (event, d) => {
         d3.select("#corpus").select("#custom_tooltip").remove()
