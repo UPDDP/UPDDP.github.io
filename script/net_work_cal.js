@@ -1,6 +1,6 @@
 let filter_list = []
 
-set_directional_edge = (node) => {
+set_directional_edge = (node, scale_set) => {
   node
     .attr(
       "class",
@@ -297,14 +297,19 @@ data_process = (data, filter_list = []) => {
   return data
 }
 
-upd_all_all_list = (data, topo_combination, filter_dict = []) => {
+upd_all_all_list = (
+  data,
+  topo_combination,
+  filter_dict = [],
+  is_filter_zero_weight_link = true
+) => {
   data = data_process(data, filter_dict)
   let topo = edge_building_matrix_paper(data, topo_combination)
 
-  return link_building(topo)
+  return link_building(topo, is_filter_zero_weight_link)
 }
 
-link_building = (topo) => {
+link_building = (topo, is_filter_zero_weight_link = true) => {
   let req_data_list = dict2list(topo.req_data_topo)
   let data_sol_list = dict2list(topo.data_sol_topo)
   let sol_sol_list = dict2list(topo.sol_sol_topo)
@@ -314,12 +319,38 @@ link_building = (topo) => {
   all_all_list.forEach((d) => (d["is_directional"] = 1))
   sol_sol_co_list.forEach((d) => (d["is_directional"] = 0))
   all_all_list = [...all_all_list, ...sol_sol_co_list]
-  all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
-  console.log(sol_sol_co_list)
+  if (is_filter_zero_weight_link) {
+    all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
+  }
+
   return all_all_list
 }
 
-//
+link_complement = (all_all_list, topo_structure_list) => {
+  let topo_structure_list_id = topo_structure_list.map((d) => d.id)
+
+  for (let i = 0; i < topo_structure_list_id.length; i++) {
+    for (let j = 0; j < topo_structure_list_id.length; j++) {
+      if (
+        d3.filter(
+          all_all_list,
+          (d) =>
+            d.source == topo_structure_list_id[i] &&
+            d.target == topo_structure_list_id[j]
+        ) == 0
+      ) {
+        all_all_list.push({
+          source: topo_structure_list_id[i],
+          target: topo_structure_list_id[j],
+          weight: 0,
+          is_directional: 1
+        })
+      }
+    }
+  }
+
+  return all_all_list
+}
 
 calculate_matrix_paper = (
   topo,
@@ -1156,7 +1187,59 @@ function tabPattern() {
   document.getElementsByClassName("nav-link")[2].classList.remove("active")
   document.getElementsByClassName("nav-link")[3].classList.remove("active")
   document.getElementsByClassName("nav-link")[2].classList.add("active")
+
+  Promise.all([
+    d3.json("./static/data.json"),
+    d3.json("./static/requirement_topo.json"),
+    d3.json("./static/data_topo.json"),
+    d3.json("./static/sol_topo.json")
+  ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
+    console.log(data_original)
+    let topo_combination = topo_building(req_topo, data_topo, sol_topo)
+
+    let all_all_list = upd_all_all_list(
+      data_original,
+      topo_combination,
+      [],
+      (is_filter_zero_weight_link = false)
+    )
+    //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
+    let node_list = topo_combination.all_list.map((d) => ({ ...d }))
+    let scale_set = scale_set_create(topo_combination, all_all_list)
+    all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 1)
+    all_all_list = link_complement(all_all_list, topo_combination.all_list)
+    /*     console.log(new Set(all_all_list.map((d) => d.source)))
+    console.log(new Set(all_all_list.map((d) => d.target)))
+    console.log(
+      new Set(all_all_list.map((d) => d.source)) -
+        new Set(all_all_list.map((d) => d.target))
+    ) */
+    let main_svg = d3.select("#pattern").append("svg")
+    let width = 1000
+    let height = 1000
+    main_svg
+      .attr("width", width)
+      .attr("height", height)
+      .attr("width", width)
+      .attr("height", height)
+    main_svg
+      .append("g")
+      .attr("class", "matrix_1")
+      .selectAll("rect")
+      .data(all_all_list)
+      .join("rect")
+      .attr("x", (d) => scale_set.all_ordinal(d.target) * 10 + 1)
+      .attr("y", (d) => scale_set.all_ordinal(d.source) * 10 + 1)
+      .attr("width", 8)
+      .attr("height", 8)
+      .attr("fill", "red")
+      .attr("opacity", (d) => scale_set.all_linear_range(d.weight))
+      .attr("stroke", "grey")
+
+    console.log(topo_combination, all_all_list)
+  })
 }
+
 function tabCorpus() {
   document.getElementById("about").style.display = "none"
   document.getElementById("explore").style.display = "none"
@@ -1175,12 +1258,14 @@ function tabCorpus() {
     d3.json("./static/data_topo.json"),
     d3.json("./static/sol_topo.json")
   ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
+    console.log(data_original)
     let topo_combination = topo_building(req_topo, data_topo, sol_topo)
 
     let all_all_list = upd_all_all_list(data_original, topo_combination)
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
+    let node_list = topo_combination.all_list.map((d) => ({ ...d }))
+    let scale_set = scale_set_create(topo_combination, all_all_list)
 
-    let scale_set = scale_set_create(topo_combination)
     let main_svg = d3.select("#corpus").append("svg")
     let width = 1000
     let height = 1000
@@ -1189,7 +1274,6 @@ function tabCorpus() {
       .attr("height", height)
       .attr("width", width)
       .attr("height", height)
-    let node_list = topo_combination.all_list.map((d) => ({ ...d }))
 
     let simulation = (d3.simulation = d3
       .forceSimulation()
@@ -1231,7 +1315,7 @@ function tabCorpus() {
         } else {
         }
       }) */
-    set_directional_edge(link)
+    set_directional_edge(link, set_directional_edge)
     main_svg
       .append("g")
       .attr("class", "marker")
@@ -1261,7 +1345,7 @@ function tabCorpus() {
       .data(node_list)
       .join("circle")
       .attr("r", 5)
-      .attr("fill", (d) => scale_set.color_type(d.group))
+      .attr("fill", (d) => scale_set.color_node_type(d.group))
       .attr("class", (d) => `node node_${d.id}`)
       .on("click", (event, d) => {
         console.log(event, d)
@@ -1363,7 +1447,7 @@ dict2list_co = (dict) => {
   return list
 }
 
-scale_set_create = (topo_combination) => {
+scale_set_create = (topo_combination, all_all_list) => {
   let scale_set = {}
   scale_set["req"] = d3
     .scaleOrdinal()
@@ -1377,7 +1461,15 @@ scale_set_create = (topo_combination) => {
     .scaleOrdinal()
     .domain(topo_combination.sol_list)
     .range(Array.from(Array(topo_combination.sol_list.length - 1).keys()))
-  scale_set["color_type"] = d3
+  scale_set["all_ordinal"] = d3
+    .scaleOrdinal()
+    .domain(topo_combination.all_list)
+    .range(Array.from(Array(topo_combination.all_list.length - 1).keys()))
+  scale_set["all_linear_range"] = d3
+    .scaleLinear()
+    .domain(d3.extent(all_all_list, (d) => d.weight))
+    .range([0, 1])
+  scale_set["color_node_type"] = d3
     .scaleOrdinal()
     .domain([1, 2, 3])
     .range(["#1f77b4", "#ff7f0e", "#2ca02c"])
@@ -1399,9 +1491,9 @@ net_link_graph = (
 
 link_path = (d) => {
   if (d.is_directional == 1) {
-    return linkArc(d)
-  } else {
     return linkLine(d)
+  } else {
+    return linkArc(d)
   }
 }
 
@@ -1570,12 +1662,25 @@ sol_iter_filter_exclude = (d, key_word_list, position) => {
     return true
   }
 }
+
 sol_iter_filter_not_exclude = (d, key_word_list, position) => {
   if (position >= d.solution.length) {
     return false
   }
 
   if (position == -1) {
+    let sol_code_set = new Set()
+    for (let i = 0; i < d.solution.length; i++) {
+      for (let j = 0; j < d.solution[i].componenet_code.length; j++) {
+        sol_code_set.add(d.solution[i].componenet_code[j])
+      }
+    }
+    for (let i in key_word_list) {
+      if (sol_code_set.has(key_word_list[i])) {
+        return true
+      }
+    }
+    return false
   } else {
     for (let i in key_word_list) {
       if (
