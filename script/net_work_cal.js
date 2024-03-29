@@ -24,6 +24,7 @@ set_directional_edge = (node) => {
     })
 }
 
+
 link_color = (d) => {
   if (d.is_directional == 1) {
     return "grey"
@@ -79,7 +80,6 @@ topo_merge = (topo_main, topo_iter) => {
 
 topo_merge_co = (topo_main, topo_iter) => {
   let out_key_list = Object.keys(topo_iter)
-  console.log(topo_main,topo_iter)
   for (
     let out_key_index = 0;
     out_key_index < out_key_list.length;
@@ -95,23 +95,31 @@ topo_merge_co = (topo_main, topo_iter) => {
       let in_key = in_key_list[in_key_index]
 
       topo_main[out_key][in_key].value += topo_iter[out_key][in_key].value
-      if(out_key=='image'){
-        console.log(topo_main[out_key][in_key].pattern,topo_iter[out_key][in_key].pattern)
-      }
-      let pattern_key_list = Array.from(new Set([...Object.keys(topo_iter[out_key][in_key].pattern),...Object.keys(topo_main[out_key][in_key].pattern)]))
-      if(pattern_key_list.length>0){
-        console.log(pattern_key_list)
-      }
-      for(let pattern_key_index=0;pattern_key_index<pattern_key_list.length  ;pattern_key_index++){
+
+      let pattern_key_list = Array.from(
+        new Set([
+          ...Object.keys(topo_iter[out_key][in_key].pattern),
+          ...Object.keys(topo_main[out_key][in_key].pattern)
+        ])
+      )
+      /* The code is checking if the length of the `pattern_key_list` array is greater than 0. If it is, then
+it will log the contents of the `pattern_key_list` array to the console. */
+
+      for (
+        let pattern_key_index = 0;
+        pattern_key_index < pattern_key_list.length;
+        pattern_key_index++
+      ) {
         let pattern_key = pattern_key_list[pattern_key_index]
-        if(!(pattern_key in topo_main[out_key][in_key].pattern)){
+        if (!(pattern_key in topo_main[out_key][in_key].pattern)) {
           topo_main[out_key][in_key].pattern[pattern_key] = 0
         }
-        if(!(pattern_key in topo_iter[out_key][in_key].pattern)){
+        if (!(pattern_key in topo_iter[out_key][in_key].pattern)) {
           topo_iter[out_key][in_key].pattern[pattern_key] = 0
         }
 
-        topo_main[out_key][in_key].pattern[pattern_key] += topo_iter[out_key][in_key].pattern[pattern_key]
+        topo_main[out_key][in_key].pattern[pattern_key] +=
+          topo_iter[out_key][in_key].pattern[pattern_key]
       }
     }
   }
@@ -178,14 +186,13 @@ sol_sol_empty_topo_building_co = (topo) => {
     sol_sol_topo[topo.sol_list[i]] = {}
     for (let j = 0; j < topo.sol_list.length; j++) {
       sol_sol_topo[topo.sol_list[i]][topo.sol_list[j]] = {
-        value:0,
+        value: 0,
         pattern: {}
       }
     }
   }
   return sol_sol_topo
 }
-
 
 calcualte_link = (topo_list) => {
   let factor = 0
@@ -254,8 +261,7 @@ data_process = (data, filter_list = []) => {
 upd_all_all_list = (data, topo_combination, filter_dict = []) => {
   data = data_process(data, filter_dict)
   let topo = edge_building_matrix_paper(data, topo_combination)
-console.log('upd ti')
-console.log(topo)
+
   return link_building(topo)
 }
 
@@ -263,15 +269,17 @@ link_building = (topo) => {
   let req_data_list = dict2list(topo.req_data_topo)
   let data_sol_list = dict2list(topo.data_sol_topo)
   let sol_sol_list = dict2list(topo.sol_sol_topo)
-  let sol_sol_co_list = dict2list(topo.sol_sol_co)
+  let sol_sol_co_list = dict2list_co(topo.sol_sol_co)
 
   let all_all_list = [...req_data_list, ...data_sol_list, ...sol_sol_list]
   all_all_list.forEach((d) => (d["is_directional"] = 1))
   sol_sol_co_list.forEach((d) => (d["is_directional"] = 0))
   all_all_list = [...all_all_list, ...sol_sol_co_list]
   all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
+  console.log(sol_sol_co_list)
   return all_all_list
 }
+
 //
 
 calculate_matrix_paper = (
@@ -308,14 +316,16 @@ calculate_matrix_paper = (
             data_sol_topo[data_cat][sol_cat] += 1
           })
         } else {
-          data_sol_topo[data_cat][sol_paper[key_sol][0]] += 1
-          sol_paper[key_sol].solution_code.forEach((sol_cat, index, sol_path) => {
-            if (index == 0) {
-              return
-            } else {
-              sol_sol_topo[sol_path[index - 1]][sol_cat] += 1
+          data_sol_topo[data_cat][sol_paper[key_sol].solution_code[0]] += 1
+          sol_paper[key_sol].solution_code.forEach(
+            (sol_cat, index, sol_path) => {
+              if (index == 0) {
+                return
+              } else {
+                sol_sol_topo[sol_path[index - 1]][sol_cat] += 1
+              }
             }
-          })
+          )
         }
       })
     })
@@ -331,14 +341,18 @@ calculate_matrix_paper = (
       key_post_sol_set.forEach((key_post_sol) => {
         sol_list.add(key_post_sol)
         if (key_post_sol.substring(0, 4) == "data") {
-          sol_sol_topo[pre_sol_cat][sol_paper[key_post_sol].solution_code[0]] += 1
-          sol_paper[key_post_sol].solution_code.forEach((sol_cat, index, sol_path) => {
-            if (index == 0) {
-              return
-            } else {
-              sol_sol_topo[sol_path[index - 1]][sol_cat] += 1
+          sol_sol_topo[pre_sol_cat][
+            sol_paper[key_post_sol].solution_code[0]
+          ] += 1
+          sol_paper[key_post_sol].solution_code.forEach(
+            (sol_cat, index, sol_path) => {
+              if (index == 0) {
+                return
+              } else {
+                sol_sol_topo[sol_path[index - 1]][sol_cat] += 1
+              }
             }
-          })
+          )
         } else {
           sol_paper[key_post_sol].solution_code.forEach((post_sol_cat) => {
             sol_sol_topo[pre_sol_cat][post_sol_cat] += 1
@@ -363,16 +377,15 @@ calculate_matrix_paper = (
         sol_sol_co[pre_key][post_key].value += 1
         //console.log(key_sol,pre_key,post_key)
         if (key_sol.substring(0, 4) == "visu") {
-          if(!(sol_axial in sol_sol_co[pre_key][post_key].pattern)){
-          sol_sol_co[pre_key][post_key].pattern[sol_axial] = 0
+          if (!(sol_axial in sol_sol_co[pre_key][post_key].pattern)) {
+            sol_sol_co[pre_key][post_key].pattern[sol_axial] = 0
           }
           sol_sol_co[pre_key][post_key].pattern[sol_axial] += 1
         }
       })
     })
-
   })
-console.log(sol_sol_co)
+
   return {
     req_data_topo,
     data_sol_topo,
@@ -973,7 +986,7 @@ edge_building_matrix_paper = (data, topo) => {
         data_paper,
         sol_paper
       )
-console.log(a.sol_sol_co)
+
       req_data_topo = topo_merge(req_data_topo, a.req_data_topo)
       data_sol_topo = topo_merge(data_sol_topo, a.data_sol_topo)
       sol_sol_topo = topo_merge(sol_sol_topo, a.sol_sol_topo)
@@ -1008,15 +1021,17 @@ console.log(a.sol_sol_co)
 
     req_data_paper[req_node.requirement_text].add(data_node.data_text)
     for (let i = 0; i < data_iter.solution.length; i++) {
-      let solution_node = {
-      }
+      let solution_node = {}
 
       solution_node["solution_text"] =
         data_iter.solution[i].solution_category +
         data_iter.solution[i].solution_text
       solution_node["solution_code"] = data_iter.solution[i].componenet_code
-      solution_node['solution_axial'] = data_iter.solution[i].solution_axial
-      sol_paper[solution_node.solution_text] = {solution_code:solution_node.solution_code,solution_axial:solution_node.solution_axial}
+      solution_node["solution_axial"] = data_iter.solution[i].solution_axial
+      sol_paper[solution_node.solution_text] = {
+        solution_code: solution_node.solution_code,
+        solution_axial: solution_node.solution_axial
+      }
     }
 
     for (let i = 0; i < data_iter.solution.length; i++) {
@@ -1066,7 +1081,7 @@ console.log(a.sol_sol_co)
   data_sol_topo = topo_merge(data_sol_topo, a.data_sol_topo)
   sol_sol_topo = topo_merge(sol_sol_topo, a.sol_sol_topo)
   sol_sol_co = topo_merge_co(sol_sol_co, a.sol_sol_co)
-  console.log(sol_sol_co)
+
   return { req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co }
 }
 
@@ -1123,8 +1138,7 @@ function tabCorpus() {
   ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
     let topo_combination = topo_building(req_topo, data_topo, sol_topo)
 
-    let all_all_list = upd_all_all_list(data_original, topo_combination, )
-
+    let all_all_list = upd_all_all_list(data_original, topo_combination)
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
 
     let scale_set = scale_set_create(topo_combination)
@@ -1278,7 +1292,6 @@ dict2list = (dict) => {
 }
 
 dict2list_co = (dict) => {
-
   let list = []
   let out_key_list = Object.keys(dict)
   for (
@@ -1295,7 +1308,10 @@ dict2list_co = (dict) => {
       list.push({
         source: out_key_list[out_key_index],
         target: in_key_list[in_key_index],
-        weight: dict[out_key_list[out_key_index]][in_key_list[in_key_index]]
+        weight:
+          dict[out_key_list[out_key_index]][in_key_list[in_key_index]].value,
+        pattern:
+          dict[out_key_list[out_key_index]][in_key_list[in_key_index]].pattern
       })
     }
   }
