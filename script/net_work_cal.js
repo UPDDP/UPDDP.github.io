@@ -22,8 +22,47 @@ set_directional_edge = (node) => {
       } else {
       }
     })
+    .on("mouseover", (event, d) => {
+      console.log(event, d)
+      add_tool_tip(d, event.clientX, event.clientY, "link")
+    })
+    .on("mouseout", (event, d) => {
+      d3.select("#corpus").select("#custom_tooltip").remove()
+    })
 }
 
+/*
+
+*/
+add_tool_tip = (d, x, y, type) => {
+  d3.select("#corpus").select("#custom_tooltip").remove()
+  d3.select("#corpus")
+    .append("div")
+    .attr("id", "custom_tooltip")
+    .attr("class", "custom_tooltip bg-violet")
+    .style("position", "absolute")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "2px")
+    .style("border-radius", "5px")
+    .style("padding", "5px")
+    .html(tooltip_html(d, type))
+    .style("left", x + 70 + "px")
+    .style("top", y + "px")
+}
+
+tooltip_html = (d, type) => {
+  switch (type) {
+    case "node":
+      return `This type is: ${d.id} <br/> It's weight is ${d.weight}`
+      break
+    case "link":
+      return `This link is from ${d.source.id} to ${d.target.id} <br/> It's weight is ${d.weight}`
+      break
+    default:
+      break
+  }
+}
 
 link_color = (d) => {
   if (d.is_directional == 1) {
@@ -1227,7 +1266,13 @@ function tabCorpus() {
       .on("click", (event, d) => {
         console.log(event, d)
       })
-
+      .on("mouseover", (event, d) => {
+        console.log(event, d)
+        add_tool_tip(d, event.clientX, event.clientY, "node")
+      })
+      .on("mouseout", (event, d) => {
+        d3.select("#corpus").select("#custom_tooltip").remove()
+      })
     // Add a drag behavior.
     node.call(
       d3
