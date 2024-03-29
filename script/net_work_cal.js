@@ -1266,9 +1266,7 @@ function tabPattern() {
       return reorder.reverse_cuthill_mckee_order(graph)
     }
     let new_order = computeRCM()
-    new_order = Array.from(
-      Array(topo_combination.all_list.length - 1).keys()
-    )[0]
+    new_order = Array.from(Array(topo_combination.all_list.length - 1).keys())
     console.log(new_order)
     let main_svg = d3.select("#pattern").append("svg")
     let width = 1000
@@ -1278,6 +1276,7 @@ function tabPattern() {
       .attr("height", height)
       .attr("width", width)
       .attr("height", height)
+    console.log(all_all_list)
     main_svg
       .append("g")
       .attr("class", "matrix_1")
