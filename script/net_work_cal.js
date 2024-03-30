@@ -9,6 +9,7 @@ set_directional_edge = (id, node, scale_set) => {
     .attr("fill", "none")
     .attr("isCalled", "false")
     .attr("d", (d) => link_path(d))
+    .attr("opacity", 0.3)
     .attr("marker-end", (d) => {
       if (d.is_directional == 1) {
         return `url(${new URL(
@@ -29,9 +30,13 @@ set_directional_edge = (id, node, scale_set) => {
 create_class_edge = (id, d) => {
   switch (id) {
     case "#corpus":
-      return `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
+      return d.is_directional
+        ? `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id} Topo_arrow_${d.source.id}_${d.target.id}`
+        : `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id} Topo_co_${d.source.id}_${d.target.id} Topo_co_${d.target.id}_${d.source.id}`
     case "#pattern":
-      return `lines Topo_line_target_${d.target} Topo_line_source_${d.source}`
+      return d.is_directional
+        ? `lines Topo_line_target_${d.target} Topo_line_source_${d.source} Topo_arrow_${d.source}_${d.target}`
+        : `lines Topo_line_target_${d.target} Topo_line_source_${d.source} Topo_co_${d.source}_${d.target} Topo_co_${d.target}_${d.source}`
   }
 }
 
@@ -965,11 +970,8 @@ function tabCorpus() {
         d3.forceLink(all_all_list).id((d) => d.id)
       )
 
-      const link = main_svg
-        .selectAll(".links")
-        .selectAll("path")
-        .data(all_all_list)
-        .join("path")
+      const link = main_svg.selectAll(".links")
+      link.selectAll("path").data(all_all_list).join("path")
       /*       .attr(
         "class",
         (d) =>
@@ -990,7 +992,7 @@ function tabCorpus() {
         } else {
         }
       }) */
-      set_directional_edge("#corpus", link, scale_set)
+      set_directional_edge("#corpus", link.selectAll("path"), scale_set)
       main_svg
         .select(".marker")
         .selectAll("defs")
@@ -1064,10 +1066,18 @@ function tabCorpus() {
         .on("mouseout", (event, d) => {
           d3.select("#corpus").select("#custom_tooltip").remove()
         })
-
+      let source_node = ""
       filter_list.forEach((d) => {
         d.key_word_list.forEach((k) => {
           node.select(`.node_${k}`).attr("r", 15)
+          console.log(k)
+          if (d.type == "solution") {
+            link
+              .select(`.Topo_arrow_${source_node}_${k}`)
+              .attr("opacity", 1)
+              .attr("stroke", "red")
+            source_node = k
+          }
         })
       })
       // Add a drag behavior.
