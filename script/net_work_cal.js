@@ -880,7 +880,9 @@ function tabCorpus() {
               type: "solution",
               key_word_list: [d.id],
               is_exclude: false,
-              is_pure: false
+              is_pure: false,
+              position: d3.filter(filter_list, (d) => d.type == "solution")
+                .length
             })
           }
 
@@ -1010,9 +1012,8 @@ function tabCorpus() {
         .append("path")
         .attr("d", "M0,-5L10,0L0,5")
 
-      const node = main_svg
-
-        .select(".nodes")
+      const node = main_svg.select(".nodes")
+      node
         .selectAll("circle")
         .data(node_list)
         .join("circle")
@@ -1043,7 +1044,9 @@ function tabCorpus() {
               type: "solution",
               key_word_list: [d.id],
               is_exclude: false,
-              is_pure: false
+              is_pure: false,
+              position: d3.filter(filter_list, (d) => d.type == "solution")
+                .length
             })
           }
           upd_force(
@@ -1061,6 +1064,12 @@ function tabCorpus() {
         .on("mouseout", (event, d) => {
           d3.select("#corpus").select("#custom_tooltip").remove()
         })
+
+      filter_list.forEach((d) => {
+        d.key_word_list.forEach((k) => {
+          node.select(`.node_${k}`).attr("r", 15)
+        })
+      })
       // Add a drag behavior.
     }
 
@@ -1301,6 +1310,7 @@ data_filter_sol = (
   is_pure = false,
   position = -1
 ) => {
+  console.log(data)
   if (typeof key_word_list == "string") {
     key_word_list = [key_word_list]
   }
@@ -1378,4 +1388,570 @@ sol_iter_pure = (d, key_word_list, position) => {
     data_set[keys[i]] = 1
   }
   return data_set
+}
+
+edge_building_unbalance = (data, topo) => {
+  let req_data_topo = req_data_empty_topo_building(topo)
+  let data_sol_topo = data_sol_empty_topo_building(topo)
+  let sol_sol_topo = sol_sol_empty_topo_building(topo)
+  let sol_sol_co = sol_sol_empty_topo_building(topo)
+
+  for (let i = 0; i < data.length; i++) {
+    let data_iter = data[i]
+
+    let req_data_topo_iter = {}
+    let data_sol_topo_iter = {}
+    let sol_sol_topo_iter = {}
+    let sol_sol_co_iter = {}
+    let req_code_list = Object.keys(
+      data_iter["requirement"]["requirement_code"]
+    )
+    let data_dict = data_iter["data"]["data_code"]
+    let data_code_list = Object.keys(data_dict)
+
+    for (let j = 0; j < req_code_list.length; j++) {
+      req_data_topo_iter[req_code_list[j]] = {}
+      for (let k = 0; k < data_code_list.length; k++) {
+        //req_data_topo[req_code_list[j]][data_code_list[k]] +=data_dict[data_code_list[k]]
+        if (!(req_code_list[j] in req_data_topo_iter)) {
+          req_data_topo_iter[req_code_list[j]] = {}
+        }
+        req_data_topo_iter[req_code_list[j]][data_code_list[k]] = 1
+      }
+    }
+
+    let sol_list_iter = []
+    for (let j = 0; j < data_iter["solution"].length; j++) {
+      let code_iter = data_iter["solution"][j]
+      if (code_iter["solution_category"] == "data_manipulation") {
+        for (let k = 0; k < code_iter["componenet_code"].length; k++) {
+          sol_list_iter.push(code_iter["componenet_code"][k])
+        }
+      } else {
+        sol_list_iter.push(code_iter["componenet_code"])
+      }
+    }
+
+    let last_sol_code = sol_list_iter[0]
+    for (let j = 0; j < data_code_list.length; j++) {
+      for (let k = 0; k < last_sol_code.length; k++) {
+        if (!(last_sol_code[k] in data_sol_topo_iter)) {
+          data_sol_topo_iter[data_code_list[j]] = {}
+        }
+        if (!(last_sol_code[k] in data_sol_topo_iter[data_code_list[j]])) {
+          data_sol_topo_iter[data_code_list[j]][last_sol_code[k]] = 0
+        }
+        data_sol_topo_iter[data_code_list[j]][last_sol_code[k]] += 1
+      }
+    }
+
+    for (let j = 1; j < sol_list_iter.length; j++) {
+      for (let in_iter = 0; in_iter < sol_list_iter[j].length; in_iter++) {
+        for (let out_iter = 0; out_iter < last_sol_code.length; out_iter++) {
+          if (!(last_sol_code[out_iter] in sol_sol_topo_iter)) {
+            sol_sol_topo_iter[last_sol_code[out_iter]] = {}
+          }
+          if (
+            !(
+              sol_list_iter[j][in_iter] in
+              sol_sol_topo_iter[last_sol_code[out_iter]]
+            )
+          ) {
+            sol_sol_topo_iter[last_sol_code[out_iter]][
+              sol_list_iter[j][in_iter]
+            ] = 0
+          }
+          sol_sol_topo_iter[last_sol_code[out_iter]][
+            sol_list_iter[j][in_iter]
+          ] += 1
+        }
+        for (let co_iter = 0; co_iter < sol_list_iter[j].length; co_iter++) {
+          if (in_iter != co_iter) {
+            if (!(sol_list_iter[j][in_iter] in sol_sol_co_iter)) {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]] = {}
+            }
+            if (
+              !(
+                sol_list_iter[j][in_iter] in
+                sol_sol_co_iter[sol_list_iter[j][in_iter]]
+              )
+            ) {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]][
+                sol_list_iter[j][co_iter]
+              ] = 1
+            } else {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]][
+                sol_list_iter[j][co_iter]
+              ] += 1
+            }
+          }
+        }
+      }
+      last_sol_code = sol_list_iter[j]
+    }
+    req_data_topo = topo_merge(req_data_topo, req_data_topo_iter)
+    data_sol_topo = topo_merge(data_sol_topo, data_sol_topo_iter)
+    sol_sol_topo = topo_merge(sol_sol_topo, sol_sol_topo_iter)
+    sol_sol_co = topo_merge(sol_sol_co, sol_sol_co_iter)
+  }
+
+  return { req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co }
+}
+
+edge_building_path = (data, topo) => {
+  let req_data_topo = req_data_empty_topo_building(topo)
+  let data_sol_topo = data_sol_empty_topo_building(topo)
+  let sol_sol_topo = sol_sol_empty_topo_building(topo)
+  let sol_sol_co = sol_sol_empty_topo_building(topo)
+
+  for (let i = 0; i < data.length; i++) {
+    let data_iter = data[i]
+    let factor = 0
+
+    let req_data_topo_iter = {}
+    let data_sol_topo_iter = {}
+    let sol_sol_topo_iter = {}
+    let sol_sol_co_iter = {}
+    let req_code_list = Object.keys(
+      data_iter["requirement"]["requirement_code"]
+    )
+    let data_dict = data_iter["data"]["data_code"]
+    let data_code_list = Object.keys(data_dict)
+
+    for (let j = 0; j < req_code_list.length; j++) {
+      req_data_topo_iter[req_code_list[j]] = {}
+      for (let k = 0; k < data_code_list.length; k++) {
+        //req_data_topo[req_code_list[j]][data_code_list[k]] +=data_dict[data_code_list[k]]
+        if (!(req_code_list[j] in req_data_topo_iter)) {
+          req_data_topo_iter[req_code_list[j]] = {}
+        }
+        req_data_topo_iter[req_code_list[j]][data_code_list[k]] = 1
+      }
+    }
+
+    let sol_list_iter = []
+    for (let j = 0; j < data_iter["solution"].length; j++) {
+      let code_iter = data_iter["solution"][j]
+      if (code_iter["solution_category"] == "data_manipulation") {
+        for (let k = 0; k < code_iter["componenet_code"].length; k++) {
+          sol_list_iter.push(code_iter["componenet_code"][k])
+        }
+      } else {
+        sol_list_iter.push(code_iter["componenet_code"])
+      }
+    }
+
+    let last_sol_code = sol_list_iter[0]
+    for (let j = 0; j < data_code_list.length; j++) {
+      for (let k = 0; k < last_sol_code.length; k++) {
+        if (!(last_sol_code[k] in data_sol_topo_iter)) {
+          data_sol_topo_iter[data_code_list[j]] = {}
+        }
+        if (!(last_sol_code[k] in data_sol_topo_iter[data_code_list[j]])) {
+          data_sol_topo_iter[data_code_list[j]][last_sol_code[k]] = 0
+        }
+        data_sol_topo_iter[data_code_list[j]][last_sol_code[k]] += 1
+
+        if (data_code_list[j]["solution_category"] == "data_manipulation") {
+        }
+      }
+    }
+
+    for (let j = 1; j < sol_list_iter.length; j++) {
+      for (let in_iter = 0; in_iter < sol_list_iter[j].length; in_iter++) {
+        for (let out_iter = 0; out_iter < last_sol_code.length; out_iter++) {
+          if (!(last_sol_code[out_iter] in sol_sol_topo_iter)) {
+            sol_sol_topo_iter[last_sol_code[out_iter]] = {}
+          }
+          if (
+            !(
+              sol_list_iter[j][in_iter] in
+              sol_sol_topo_iter[last_sol_code[out_iter]]
+            )
+          ) {
+            sol_sol_topo_iter[last_sol_code[out_iter]][
+              sol_list_iter[j][in_iter]
+            ] = 0
+          }
+          sol_sol_topo_iter[last_sol_code[out_iter]][
+            sol_list_iter[j][in_iter]
+          ] += 1
+        }
+        for (let co_iter = 0; co_iter < sol_list_iter[j].length; co_iter++) {
+          if (in_iter != co_iter) {
+            if (!(sol_list_iter[j][in_iter] in sol_sol_co_iter)) {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]] = {}
+            }
+            if (
+              !(
+                sol_list_iter[j][in_iter] in
+                sol_sol_co_iter[sol_list_iter[j][in_iter]]
+              )
+            ) {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]][
+                sol_list_iter[j][co_iter]
+              ] = 1
+            } else {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]][
+                sol_list_iter[j][co_iter]
+              ] += 1
+            }
+          }
+        }
+      }
+      last_sol_code = sol_list_iter[j]
+    }
+    factor = calcualte_link([
+      req_data_topo_iter,
+      data_sol_topo_iter,
+      sol_sol_topo_iter
+    ])
+
+    req_data_topo_iter = topo_reparameter(req_data_topo_iter, 1 / factor)
+    data_sol_topo_iter = topo_reparameter(data_sol_topo_iter, 1 / factor)
+    sol_sol_topo_iter = topo_reparameter(sol_sol_topo_iter, 1 / factor)
+    //sol_sol_co_iter = topo_reparameter(sol_sol_co_iter, 1 / factor)
+
+    req_data_topo = topo_merge(req_data_topo, req_data_topo_iter)
+    data_sol_topo = topo_merge(data_sol_topo, data_sol_topo_iter)
+    sol_sol_topo = topo_merge(sol_sol_topo, sol_sol_topo_iter)
+    sol_sol_co = topo_merge(sol_sol_co, sol_sol_co_iter)
+  }
+  return { req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co }
+}
+
+edge_building_requirement = (data, topo) => {
+  let req_data_topo = req_data_empty_topo_building(topo)
+  let data_sol_topo = data_sol_empty_topo_building(topo)
+  let sol_sol_topo = sol_sol_empty_topo_building(topo)
+  let sol_sol_co = sol_sol_empty_topo_building(topo)
+  let last_requirement = ""
+
+  let req_data_topo_req = req_data_empty_topo_building(topo)
+  let data_sol_topo_req = data_sol_empty_topo_building(topo)
+  let sol_sol_topo_req = sol_sol_empty_topo_building(topo)
+  let sol_sol_co_req = sol_sol_empty_topo_building(topo)
+
+  for (let i = 0; i < data.length; i++) {
+    let data_iter = data[i]
+
+    if (last_requirement != data_iter["requirement"]["requirement_text"]) {
+      let factor = calcualte_link([
+        req_data_topo_req,
+        data_sol_topo_req,
+        sol_sol_topo_req
+        //sol_sol_co_req
+      ])
+      if (factor == 0) {
+        factor = 1
+      }
+      req_data_topo_req = topo_reparameter(req_data_topo_req, 1 / factor)
+      data_sol_topo_req = topo_reparameter(data_sol_topo_req, 1 / factor)
+      sol_sol_topo_req = topo_reparameter(sol_sol_topo_req, 1 / factor)
+      sol_sol_co_req = topo_reparameter(sol_sol_co_req, 1 / factor)
+
+      req_data_topo = topo_merge(req_data_topo, req_data_topo_req)
+      data_sol_topo = topo_merge(data_sol_topo, data_sol_topo_req)
+      sol_sol_topo = topo_merge(sol_sol_topo, sol_sol_topo_req)
+      sol_sol_co = topo_merge(sol_sol_co, sol_sol_co_req)
+
+      req_data_topo_req = req_data_empty_topo_building(topo)
+      data_sol_topo_req = data_sol_empty_topo_building(topo)
+      sol_sol_topo_req = sol_sol_empty_topo_building(topo)
+      sol_sol_co_req = sol_sol_empty_topo_building(topo)
+
+      factor = 0
+      last_title = data_iter["paper_title"]
+    }
+
+    let req_data_topo_iter = {}
+    let data_sol_topo_iter = {}
+    let sol_sol_topo_iter = {}
+    let sol_sol_co_iter = {}
+    let req_code_list = Object.keys(
+      data_iter["requirement"]["requirement_code"]
+    )
+    let data_dict = data_iter["data"]["data_code"]
+    let data_code_list = Object.keys(data_dict)
+
+    for (let j = 0; j < req_code_list.length; j++) {
+      req_data_topo_iter[req_code_list[j]] = {}
+      for (let k = 0; k < data_code_list.length; k++) {
+        //req_data_topo[req_code_list[j]][data_code_list[k]] +=data_dict[data_code_list[k]]
+        if (!(req_code_list[j] in req_data_topo_iter)) {
+          req_data_topo_iter[req_code_list[j]] = {}
+        }
+        req_data_topo_iter[req_code_list[j]][data_code_list[k]] = 1
+      }
+    }
+
+    let sol_list_iter = []
+    for (let j = 0; j < data_iter["solution"].length; j++) {
+      let code_iter = data_iter["solution"][j]
+      if (code_iter["solution_category"] == "data_manipulation") {
+        for (let k = 0; k < code_iter["componenet_code"].length; k++) {
+          sol_list_iter.push(code_iter["componenet_code"][k])
+        }
+      } else {
+        sol_list_iter.push(code_iter["componenet_code"])
+      }
+    }
+
+    let last_sol_code = sol_list_iter[0]
+    for (let j = 0; j < data_code_list.length; j++) {
+      for (let k = 0; k < last_sol_code.length; k++) {
+        if (!(last_sol_code[k] in data_sol_topo_iter)) {
+          data_sol_topo_iter[data_code_list[j]] = {}
+        }
+        if (!(last_sol_code[k] in data_sol_topo_iter[data_code_list[j]])) {
+          data_sol_topo_iter[data_code_list[j]][last_sol_code[k]] = 0
+        }
+        data_sol_topo_iter[data_code_list[j]][last_sol_code[k]] += 1
+      }
+    }
+
+    for (let j = 1; j < sol_list_iter.length; j++) {
+      for (let in_iter = 0; in_iter < sol_list_iter[j].length; in_iter++) {
+        for (let out_iter = 0; out_iter < last_sol_code.length; out_iter++) {
+          if (!(last_sol_code[out_iter] in sol_sol_topo_iter)) {
+            sol_sol_topo_iter[last_sol_code[out_iter]] = {}
+          }
+          if (
+            !(
+              sol_list_iter[j][in_iter] in
+              sol_sol_topo_iter[last_sol_code[out_iter]]
+            )
+          ) {
+            sol_sol_topo_iter[last_sol_code[out_iter]][
+              sol_list_iter[j][in_iter]
+            ] = 0
+          }
+          sol_sol_topo_iter[last_sol_code[out_iter]][
+            sol_list_iter[j][in_iter]
+          ] += 1
+        }
+        for (let co_iter = 0; co_iter < sol_list_iter[j].length; co_iter++) {
+          if (in_iter != co_iter) {
+            if (!(sol_list_iter[j][in_iter] in sol_sol_co_iter)) {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]] = {}
+            }
+            if (
+              !(
+                sol_list_iter[j][in_iter] in
+                sol_sol_co_iter[sol_list_iter[j][in_iter]]
+              )
+            ) {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]][
+                sol_list_iter[j][co_iter]
+              ] = 1
+            } else {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]][
+                sol_list_iter[j][co_iter]
+              ] += 1
+            }
+          }
+        }
+      }
+      last_sol_code = sol_list_iter[j]
+    }
+
+    req_data_topo_req = topo_merge(req_data_topo_req, req_data_topo_iter)
+    data_sol_topo_req = topo_merge(data_sol_topo_req, data_sol_topo_iter)
+    sol_sol_topo_req = topo_merge(sol_sol_topo_req, sol_sol_topo_iter)
+    sol_sol_co_req = topo_merge(sol_sol_co_req, sol_sol_co_iter)
+  }
+
+  let factor = calcualte_link([
+    req_data_topo_req,
+    data_sol_topo_req,
+    sol_sol_topo_req
+    //sol_sol_co_req
+  ])
+  if (factor == 0) {
+    factor = 1
+  }
+  req_data_topo_req = topo_reparameter(req_data_topo_req, 1 / factor)
+  data_sol_topo_req = topo_reparameter(data_sol_topo_req, 1 / factor)
+  sol_sol_topo_req = topo_reparameter(sol_sol_topo_req, 1 / factor)
+  sol_sol_co_req = topo_reparameter(sol_sol_co_req, 1 / factor)
+
+  req_data_topo = topo_merge(req_data_topo, req_data_topo_req)
+  data_sol_topo = topo_merge(data_sol_topo, data_sol_topo_req)
+  sol_sol_topo = topo_merge(sol_sol_topo, sol_sol_topo_req)
+  sol_sol_co = topo_merge(sol_sol_co, sol_sol_co_req)
+
+  req_data_topo_req = req_data_empty_topo_building(topo)
+  data_sol_topo_req = data_sol_empty_topo_building(topo)
+  sol_sol_topo_req = sol_sol_empty_topo_building(topo)
+  sol_sol_co_req = sol_sol_empty_topo_building(topo)
+  return { req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co }
+}
+
+edge_building_paper = (data, topo) => {
+  let req_data_topo = req_data_empty_topo_building(topo)
+  let data_sol_topo = data_sol_empty_topo_building(topo)
+  let sol_sol_topo = sol_sol_empty_topo_building(topo)
+  let sol_sol_co = sol_sol_empty_topo_building(topo)
+  let last_title = ""
+
+  let req_data_topo_paper = req_data_empty_topo_building(topo)
+  let data_sol_topo_paper = data_sol_empty_topo_building(topo)
+  let sol_sol_topo_paper = sol_sol_empty_topo_building(topo)
+  let sol_sol_co_paper = sol_sol_empty_topo_building(topo)
+
+  for (let i = 0; i < data.length; i++) {
+    let data_iter = data[i]
+
+    if (last_title != data_iter["paper_title"]) {
+      let factor = calcualte_link([
+        req_data_topo_paper,
+        data_sol_topo_paper,
+        sol_sol_topo_paper
+        //sol_sol_co_paper
+      ])
+      if (factor == 0) {
+        factor = 1
+      }
+      req_data_topo_paper = topo_reparameter(req_data_topo_paper, 1 / factor)
+      data_sol_topo_paper = topo_reparameter(data_sol_topo_paper, 1 / factor)
+      sol_sol_topo_paper = topo_reparameter(sol_sol_topo_paper, 1 / factor)
+      sol_sol_co_paper = topo_reparameter(sol_sol_co_paper, 1 / factor)
+
+      req_data_topo = topo_merge(req_data_topo, req_data_topo_paper)
+      data_sol_topo = topo_merge(data_sol_topo, data_sol_topo_paper)
+      sol_sol_topo = topo_merge(sol_sol_topo, sol_sol_topo_paper)
+      sol_sol_co = topo_merge(sol_sol_co, sol_sol_co_paper)
+
+      req_data_topo_paper = req_data_empty_topo_building(topo)
+      data_sol_topo_paper = data_sol_empty_topo_building(topo)
+      sol_sol_topo_paper = sol_sol_empty_topo_building(topo)
+      sol_sol_co_paper = sol_sol_empty_topo_building(topo)
+
+      factor = 0
+      last_title = data_iter["paper_title"]
+    }
+
+    let req_data_topo_iter = {}
+    let data_sol_topo_iter = {}
+    let sol_sol_topo_iter = {}
+    let sol_sol_co_iter = {}
+    let req_code_list = Object.keys(
+      data_iter["requirement"]["requirement_code"]
+    )
+    let data_dict = data_iter["data"]["data_code"]
+    let data_code_list = Object.keys(data_dict)
+
+    for (let j = 0; j < req_code_list.length; j++) {
+      req_data_topo_iter[req_code_list[j]] = {}
+      for (let k = 0; k < data_code_list.length; k++) {
+        //req_data_topo[req_code_list[j]][data_code_list[k]] +=data_dict[data_code_list[k]]
+        if (!(req_code_list[j] in req_data_topo_iter)) {
+          req_data_topo_iter[req_code_list[j]] = {}
+        }
+        req_data_topo_iter[req_code_list[j]][data_code_list[k]] = 1
+      }
+    }
+
+    let sol_list_iter = []
+    for (let j = 0; j < data_iter["solution"].length; j++) {
+      let code_iter = data_iter["solution"][j]
+      if (code_iter["solution_category"] == "data_manipulation") {
+        for (let k = 0; k < code_iter["componenet_code"].length; k++) {
+          sol_list_iter.push(code_iter["componenet_code"][k])
+        }
+      } else {
+        sol_list_iter.push(code_iter["componenet_code"])
+      }
+    }
+
+    let last_sol_code = sol_list_iter[0]
+    for (let j = 0; j < data_code_list.length; j++) {
+      for (let k = 0; k < last_sol_code.length; k++) {
+        if (!(last_sol_code[k] in data_sol_topo_iter)) {
+          data_sol_topo_iter[data_code_list[j]] = {}
+        }
+        if (!(last_sol_code[k] in data_sol_topo_iter[data_code_list[j]])) {
+          data_sol_topo_iter[data_code_list[j]][last_sol_code[k]] = 0
+        }
+        data_sol_topo_iter[data_code_list[j]][last_sol_code[k]] += 1
+      }
+    }
+
+    for (let j = 1; j < sol_list_iter.length; j++) {
+      for (let in_iter = 0; in_iter < sol_list_iter[j].length; in_iter++) {
+        for (let out_iter = 0; out_iter < last_sol_code.length; out_iter++) {
+          if (!(last_sol_code[out_iter] in sol_sol_topo_iter)) {
+            sol_sol_topo_iter[last_sol_code[out_iter]] = {}
+          }
+          if (
+            !(
+              sol_list_iter[j][in_iter] in
+              sol_sol_topo_iter[last_sol_code[out_iter]]
+            )
+          ) {
+            sol_sol_topo_iter[last_sol_code[out_iter]][
+              sol_list_iter[j][in_iter]
+            ] = 0
+          }
+          sol_sol_topo_iter[last_sol_code[out_iter]][
+            sol_list_iter[j][in_iter]
+          ] += 1
+        }
+
+        for (let co_iter = 0; co_iter < sol_list_iter[j].length; co_iter++) {
+          if (sol_list_iter[j][in_iter] != sol_list_iter[j][co_iter]) {
+            if (!(sol_list_iter[j][in_iter] in sol_sol_co_iter)) {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]] = {}
+            }
+            if (
+              !(
+                sol_list_iter[j][in_iter] in
+                sol_sol_co_iter[sol_list_iter[j][in_iter]]
+              )
+            ) {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]][
+                sol_list_iter[j][co_iter]
+              ] = 1
+            } else {
+              sol_sol_co_iter[sol_list_iter[j][in_iter]][
+                sol_list_iter[j][co_iter]
+              ] += 1
+            }
+          }
+        }
+      }
+      last_sol_code = sol_list_iter[j]
+    }
+
+    req_data_topo_paper = topo_merge(req_data_topo_paper, req_data_topo_iter)
+    data_sol_topo_paper = topo_merge(data_sol_topo_paper, data_sol_topo_iter)
+    sol_sol_topo_paper = topo_merge(sol_sol_topo_paper, sol_sol_topo_iter)
+    sol_sol_co_paper = topo_merge(sol_sol_co_paper, sol_sol_co_iter)
+  }
+
+  let factor = calcualte_link([
+    req_data_topo_paper,
+    data_sol_topo_paper,
+    sol_sol_topo_paper
+    //sol_sol_co_paper
+  ])
+  if (factor == 0) {
+    factor = 1
+  }
+  req_data_topo_paper = topo_reparameter(req_data_topo_paper, 1 / factor)
+  data_sol_topo_paper = topo_reparameter(data_sol_topo_paper, 1 / factor)
+  sol_sol_topo_paper = topo_reparameter(sol_sol_topo_paper, 1 / factor)
+  sol_sol_co_paper = topo_reparameter(sol_sol_co_paper, 1 / factor)
+
+  req_data_topo = topo_merge(req_data_topo, req_data_topo_paper)
+  data_sol_topo = topo_merge(data_sol_topo, data_sol_topo_paper)
+  sol_sol_topo = topo_merge(sol_sol_topo, sol_sol_topo_paper)
+  sol_sol_co = topo_merge(sol_sol_co, sol_sol_co_paper)
+
+  req_data_topo_paper = req_data_empty_topo_building(topo)
+  data_sol_topo_paper = data_sol_empty_topo_building(topo)
+  sol_sol_topo_paper = sol_sol_empty_topo_building(topo)
+  sol_sol_co_paper = sol_sol_empty_topo_building(topo)
+
+  return { req_data_topo, data_sol_topo, sol_sol_topo, sol_sol_co }
 }
