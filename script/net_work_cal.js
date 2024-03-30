@@ -78,6 +78,21 @@ tooltip_html = (id, d, type) => {
       break
   }
 }
+path_form = (type, size) => {
+  switch (type) {
+    case 1:
+      return d3.symbol().type(d3.symbolSquare).size(size)()
+      break
+    case 2:
+      return d3.symbol().type(d3.symbolTriangle).size(size)()
+      break
+    case 3:
+      return d3.symbol().type(d3.symbolCircle).size(size)()
+      break
+    default:
+      break
+  }
+}
 
 link_color = (d) => {
   if (d.is_directional == 1) {
@@ -759,6 +774,7 @@ function tabCorpus() {
     d3.json("./static/data_topo.json"),
     d3.json("./static/sol_topo.json")
   ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
+    d3.select("#corpus").select("svg").remove()
     let draw_force = (
       data_original,
       req_topo,
@@ -854,10 +870,10 @@ function tabCorpus() {
       const node = main_svg
         .append("g")
         .attr("class", "nodes")
-        .selectAll("circle")
+        .selectAll(".node")
         .data(node_list)
-        .join("circle")
-        .attr("r", 5)
+        .join("path")
+        .attr("d", (d) => path_form(d.group, 100))
         .attr("fill", (d) => scale_set.color_node_type(d.group))
         .attr("class", (d) => `node node_${d.id}`)
         .on("click", (event, d) => {
@@ -919,7 +935,7 @@ function tabCorpus() {
       simulation.on("tick", () => {
         link.attr("d", link_path)
 
-        node.attr("cx", (d) => d.x).attr("cy", (d) => d.y)
+        node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
       })
 
       // Reheat the simulation when drag starts, and fix the subject position.
@@ -1016,9 +1032,10 @@ function tabCorpus() {
 
       const node = main_svg.select(".nodes")
       node
-        .selectAll("circle")
+
+        .selectAll(".node")
         .data(node_list)
-        .join("circle")
+        .join("path")
         .attr("r", 5)
         .attr("fill", (d) => scale_set.color_node_type(d.group))
         .attr("class", (d) => `node node_${d.id}`)
@@ -1069,15 +1086,14 @@ function tabCorpus() {
       let source_node = ""
       filter_list.forEach((d) => {
         d.key_word_list.forEach((k) => {
-          node.select(`.node_${k}`).attr("r", 15)
+          node.select(`.node_${k}`).attr("d", (d) => path_form(d.group, 400))
           console.log(k)
-          if (d.type == "solution") {
-            link
-              .select(`.Topo_arrow_${source_node}_${k}`)
-              .attr("opacity", 1)
-              .attr("stroke", "red")
-            source_node = k
-          }
+
+          link
+            .select(`.Topo_arrow_${source_node}_${k}`)
+            .attr("opacity", 1)
+            .attr("stroke", "red")
+          source_node = k
         })
       })
       // Add a drag behavior.
