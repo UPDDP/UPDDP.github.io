@@ -9,7 +9,7 @@ init_edge = (id, node, scale_set) => {
     .attr("fill", "none")
     .attr("isCalled", "false")
     .attr("d", (d) => link_path(d))
-    .attr("opacity", 0.3)
+    .attr("opacity", 0.4)
     .attr("marker-end", (d) => {
       if (d.is_directional == 1) {
         return `url(${new URL(
@@ -32,6 +32,35 @@ init_node = (id, node, scale_set, simulation) => {
     .attr("d", (d) => path_form(d.group, 100))
     .attr("fill", (d) => scale_set.color_node_type(d.group))
     .attr("class", (d) => `node node_${d.id}`)
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
+
+  node.call(
+    d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended)
+  )
+
+  // Set the position attributes of links and nodes each time the simulation ticks.
+
+  // Reheat the simulation when drag starts, and fix the subject position.
+  function dragstarted(event) {
+    if (!event.active) simulation.alphaTarget(0.3).restart()
+    event.subject.fx = event.subject.x
+    event.subject.fy = event.subject.y
+  }
+
+  // Update the subject (dragged node) position during drag.
+  function dragged(event) {
+    event.subject.fx = event.x
+    event.subject.fy = event.y
+  }
+
+  // Restore the target alpha so the simulation cools after dragging ends.
+  // Unfix the subject position now that it’s no longer being dragged.
+  function dragended(event) {
+    if (!event.active) simulation.alphaTarget(0)
+    event.subject.fx = null
+    event.subject.fy = null
+  }
 }
 
 init_marker = (id, node, scale_set) => {
@@ -59,6 +88,7 @@ upd_link_and_node_and_marker = (
   node_set,
   marker_set
 ) => {
+ 
   link_set.selectAll("path").attr("stroke-width", (d) => Math.sqrt(d.weight))
   let requirement_code_list = d3.filter(
     filter_list,
@@ -137,14 +167,14 @@ add_tool_tip = (id, d, x, y, type) => {
 tooltip_html = (id, d, type) => {
   switch (type) {
     case "node":
-      return `This type is: ${d.id} <br/> It's weight is ${d.weight}`
+      return `Type: ${d.id}`
       break
     case "link":
       switch (id) {
         case "#corpus":
-          return `This link is from ${d.source.id} to ${d.target.id} <br/> It's weight is ${d.weight}`
+          return `This link is from ${d.source.id} to ${d.target.id} <br/> Weight: ${d.weight}`
         case "#pattern":
-          return `This link is from ${d.source} to ${d.target} <br/> It's weight is ${d.weight}`
+          return `This link is from ${d.source} to ${d.target} <br/> Weight: ${d.weight}`
       }
 
       break
@@ -155,13 +185,13 @@ tooltip_html = (id, d, type) => {
 path_form = (type, size) => {
   switch (type) {
     case 1:
-      return d3.symbol().type(d3.symbolSquare).size(size)()
+      return d3.symbol().type(d3.symbolSquare).size(size+40)()
       break
     case 2:
       return d3.symbol().type(d3.symbolTriangle).size(size)()
       break
     case 3:
-      return d3.symbol().type(d3.symbolCircle).size(size)()
+      return d3.symbol().type(d3.symbolCircle).size(size+40)()
       break
     default:
       break
