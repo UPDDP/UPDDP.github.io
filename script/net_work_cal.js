@@ -98,7 +98,6 @@ upd_link_and_node_and_marker = (
       }
     })
   })
-
 }
 
 create_class_edge = (id, d) => {
@@ -413,19 +412,25 @@ upd_all_all_list = (
   data_original,
   topo_combination,
   filter_dict = [],
-  is_filter_zero_weight_link = true
+  is_filter_zero_weight_link = true,
+  is_category = false
 ) => {
   let data = data_process(data_original, filter_dict)
   let topo = edge_building_matrix_paper(data, topo_combination)
-
-  return link_building(topo, is_filter_zero_weight_link)
+  console.log("topo")
+  console.log(topo)
+  return link_building(topo, is_filter_zero_weight_link, is_category)
 }
 
-link_building = (topo, is_filter_zero_weight_link = true) => {
+link_building = (
+  topo,
+  is_filter_zero_weight_link = true,
+  is_category = false
+) => {
   let req_data_list = dict2list(topo.req_data_topo)
   let data_sol_list = dict2list(topo.data_sol_topo)
   let sol_sol_list = dict2list(topo.sol_sol_topo)
-  let sol_sol_co_list = dict2list_co(topo.sol_sol_co)
+  let sol_sol_co_list = dict2list_co(topo.sol_sol_co, is_category)
 
   let all_all_list = [...req_data_list, ...data_sol_list, ...sol_sol_list]
   all_all_list.forEach((d) => (d["is_directional"] = 1))
@@ -434,13 +439,11 @@ link_building = (topo, is_filter_zero_weight_link = true) => {
   if (is_filter_zero_weight_link) {
     all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
   }
-
   return all_all_list
 }
 
 link_complement = (all_all_list, topo_structure_list) => {
   let topo_structure_list_id = topo_structure_list.map((d) => d.id)
-
   for (let i = 0; i < topo_structure_list_id.length; i++) {
     for (let j = 0; j < topo_structure_list_id.length; j++) {
       if (
@@ -879,8 +882,11 @@ function tabCorpus() {
       let all_all_list = upd_all_all_list(
         data_original,
         topo_combination,
-        filter_list
+        filter_list,
+        true,
+        true
       )
+      console.log(all_all_list)
 
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
@@ -1044,11 +1050,12 @@ function tabCorpus() {
       simulation
     ) => {
       let topo_combination = topo_building(req_topo, data_topo, sol_topo)
-
       let all_all_list = upd_all_all_list(
         data_original,
         topo_combination,
-        filter_list
+        filter_list,
+        true,
+        true
       )
 
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
@@ -1209,7 +1216,7 @@ dict2list = (dict) => {
   return list
 }
 
-dict2list_co = (dict) => {
+dict2list_co = (dict, is_category = false) => {
   let list = []
   let out_key_list = Object.keys(dict)
   for (
@@ -1223,16 +1230,35 @@ dict2list_co = (dict) => {
       in_key_index < in_key_list.length;
       in_key_index++
     ) {
-      list.push({
-        source: out_key_list[out_key_index],
-        target: in_key_list[in_key_index],
-        weight:
-          dict[out_key_list[out_key_index]][in_key_list[in_key_index]].value,
-        pattern:
+      if (is_category) {
+        for (const [key, value] of Object.entries(
           dict[out_key_list[out_key_index]][in_key_list[in_key_index]].pattern
-      })
+        )) {
+          list.push({
+            source: out_key_list[out_key_index],
+            target: in_key_list[in_key_index],
+            weight:
+              dict[out_key_list[out_key_index]][in_key_list[in_key_index]]
+                .pattern[key],
+            pattern_specify: key,
+            pattern:
+              dict[out_key_list[out_key_index]][in_key_list[in_key_index]]
+                .pattern
+          })
+        }
+      } else {
+        list.push({
+          source: out_key_list[out_key_index],
+          target: in_key_list[in_key_index],
+          weight:
+            dict[out_key_list[out_key_index]][in_key_list[in_key_index]].value,
+          pattern:
+            dict[out_key_list[out_key_index]][in_key_list[in_key_index]].pattern
+        })
+      }
     }
   }
+
   return list
 }
 
