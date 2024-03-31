@@ -32,33 +32,6 @@ init_node = (id, node, scale_set, simulation) => {
     .attr("d", (d) => path_form(d.group, 100))
     .attr("fill", (d) => scale_set.color_node_type(d.group))
     .attr("class", (d) => `node node_${d.id}`)
-
-  node.call(
-    d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended)
-  )
-
-  // Set the position attributes of links and nodes each time the simulation ticks.
-
-  // Reheat the simulation when drag starts, and fix the subject position.
-  function dragstarted(event) {
-    if (!event.active) simulation.alphaTarget(0.3).restart()
-    event.subject.fx = event.subject.x
-    event.subject.fy = event.subject.y
-  }
-
-  // Update the subject (dragged node) position during drag.
-  function dragged(event) {
-    event.subject.fx = event.x
-    event.subject.fy = event.y
-  }
-
-  // Restore the target alpha so the simulation cools after dragging ends.
-  // Unfix the subject position now that it’s no longer being dragged.
-  function dragended(event) {
-    if (!event.active) simulation.alphaTarget(0)
-    event.subject.fx = null
-    event.subject.fy = null
-  }
 }
 
 init_marker = (id, node, scale_set) => {
@@ -86,11 +59,12 @@ upd_link_and_node_and_marker = (
   node_set,
   marker_set
 ) => {
+  link_set.selectAll("path").attr("stroke-width", (d) => Math.sqrt(d.weight))
   let source_node = ""
   filter_list.forEach((d) => {
     d.key_word_list.forEach((k) => {
       node_set.select(`.node_${k}`).attr("d", (d) => path_form(d.group, 400))
-
+      console.log(`.Topo_arrow_${source_node}_${k}`, link_set)
       link_set
         .select(`.Topo_arrow_${source_node}_${k}`)
         .attr("opacity", 1)
@@ -896,7 +870,10 @@ function tabCorpus() {
         .append("g")
         .attr("class", "links")
         .selectAll("path")
-        .data(all_all_list)
+        .data(
+          all_all_list,
+          (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
+        )
         .join("path")
       /*       .attr(
         "class",
@@ -931,14 +908,35 @@ function tabCorpus() {
         .append("g")
         .attr("class", "nodes")
         .selectAll(".node")
-        .data(node_list)
+        .data(node_list, (d) => d.id)
         .join("path")
+
       init_node("#corpus", node, scale_set, simulation)
       simulation.on("tick", () => {
         link.attr("d", link_path)
 
         node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
       })
+
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart()
+        event.subject.fx = event.subject.x
+        event.subject.fy = event.subject.y
+      }
+
+      // Update the subject (dragged node) position during drag.
+      function dragged(event) {
+        event.subject.fx = event.x
+        event.subject.fy = event.y
+      }
+
+      // Restore the target alpha so the simulation cools after dragging ends.
+      // Unfix the subject position now that it’s no longer being dragged.
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0)
+        event.subject.fx = null
+        event.subject.fy = null
+      }
       node
         .on("click", (event, d) => {
           if (req_topo.indexOf(d.id) != -1) {
@@ -984,6 +982,13 @@ function tabCorpus() {
         .on("mouseout", (event, d) => {
           d3.select("#corpus").select("#custom_tooltip").remove()
         })
+        .call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        )
       // Add a drag behavior.
     }
 
@@ -1006,15 +1011,19 @@ function tabCorpus() {
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
       let scale_set = scale_set_create(topo_combination, all_all_list)
-
       let main_svg = d3.select("#corpus").select("svg")
       simulation.nodes(node_list).force(
         "link",
         d3.forceLink(all_all_list).id((d) => d.id)
       )
-
       const link = main_svg.selectAll(".links")
-      link.selectAll("path").data(all_all_list).join("path")
+      link
+        .selectAll("path")
+        .data(
+          all_all_list,
+          (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
+        )
+        .join("path")
       /*       .attr(
         "class",
         (d) =>
@@ -1036,15 +1045,39 @@ function tabCorpus() {
         }
       }) */
       //init_edge("#corpus", link.selectAll("path"), scale_set)
-      let marker = main_svg
-        .select(".marker")
-        .selectAll("defs")
-        .data(all_all_list)
-        .join("defs")
+      let marker = main_svg.select(".marker").selectAll("defs")
+      //.data(all_all_list)
+      //.join("defs")
       let marker_set = main_svg.select(".markers")
-      // init_marker("#corpus", marker, scale_set)
+      //init_marker("#corpus", marker, scale_set)
       const node = main_svg.select(".nodes")
-      node.selectAll(".node").data(node_list).join("path")
+      node
+        .selectAll(".node")
+        .data(node_list, (d) => d.id)
+        .join("path")
+
+      // Set the position attributes of links and nodes each time the simulation ticks.
+
+      // Reheat the simulation when drag starts, and fix the subject position.
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart()
+        event.subject.fx = event.subject.x
+        event.subject.fy = event.subject.y
+      }
+
+      // Update the subject (dragged node) position during drag.
+      function dragged(event) {
+        event.subject.fx = event.x
+        event.subject.fy = event.y
+      }
+
+      // Restore the target alpha so the simulation cools after dragging ends.
+      // Unfix the subject position now that it’s no longer being dragged.
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0)
+        event.subject.fx = null
+        event.subject.fy = null
+      }
       //init_node("#corpus", node.selectAll(".node"), scale_set, simulation)
       node
         .selectAll(".node")
@@ -1093,6 +1126,15 @@ function tabCorpus() {
           d3.select("#corpus").select("#custom_tooltip").remove()
         })
       upd_link_and_node_and_marker(filter_list, link, node, marker_set)
+      node
+        .selectAll(".node")
+        .call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        )
       // Add a drag behavior.
     }
 
