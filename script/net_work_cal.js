@@ -731,7 +731,6 @@ function tabPattern() {
     )
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
     let node_list = topo_combination.all_list.map((d) => ({ ...d }))
-    let scale_set = scale_set_create(topo_combination, all_all_list)
 
     all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 1)
     all_all_list = link_complement(all_all_list, topo_combination.all_list)
@@ -773,7 +772,16 @@ function tabPattern() {
     }
     let new_order = computeLeaforder()
     new_order = Array.from(Array(topo_combination.all_list.length - 1).keys())
-
+    let scale_set = scale_set_create(topo_combination, all_all_list)
+    let scale_opacity = d3.scaleLog(
+      d3.extent(all_all_list, (d) => d.weight + 1),
+      [0, 1]
+    )
+    console.log(
+      all_all_list[0].weight,
+      scale_opacity(all_all_list[0].weight),
+      scale_opacity(140)
+    )
     let main_svg = d3.select("#pattern").append("svg")
     let width = 1000
     let height = 1000
@@ -782,7 +790,7 @@ function tabPattern() {
       .attr("height", height)
       .attr("width", width)
       .attr("height", height)
-
+    console.log(all_all_list)
     main_svg
       .append("g")
       .attr("class", "matrix_1")
@@ -791,12 +799,20 @@ function tabPattern() {
       .join("rect")
       .attr("x", (d) => new_order[scale_set.all_ordinal(d.target)] * 10 + 1)
       .attr("y", (d) => new_order[scale_set.all_ordinal(d.source)] * 10 + 1)
+      .attr("id", (d) => `rect_${d.source}_${d.target}`)
       .attr("width", 8)
       .attr("height", 8)
       .attr("fill", "red")
-      .attr("opacity", (d) => scale_set.all_linear_range(d.weight))
+      .attr("opacity", (d) => scale_opacity(+d.weight + 1))
       .attr("stroke", "grey")
       .on("mouseover", (event, d) => {
+        console.log(
+          event,
+          d,
+          d3.select(`#rect_${d.source}_${d.target}`).attr("opacity"),
+          this
+        )
+        d3.select(`#rect_${d.source}_${d.target}`).attr("fill", "blue")
         add_tool_tip("#pattern", d, event.clientX, event.clientY, "link")
       })
       .on("mouseout", (event, d) => {
@@ -1211,8 +1227,9 @@ scale_set_create = (topo_combination, all_all_list) => {
     .scaleOrdinal()
     .domain(topo_combination.all_list)
     .range(Array.from(Array(topo_combination.all_list.length - 1).keys()))
+  console.log(d3.extent(all_all_list, (d) => d.weight))
   scale_set["all_linear_range"] = d3
-    .scaleLinear()
+    .scaleLog()
     .domain(d3.extent(all_all_list, (d) => d.weight))
     .range([0, 1])
   scale_set["color_node_type"] = d3
