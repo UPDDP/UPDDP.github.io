@@ -88,7 +88,6 @@ upd_link_and_node_and_marker = (
   node_set,
   marker_set
 ) => {
-  link_set.selectAll("path").attr("stroke-width", (d) => Math.sqrt(d.weight))
   let requirement_code_list = d3.filter(
     filter_list,
     (d) => d.type == "requirement"
