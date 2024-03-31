@@ -60,18 +60,45 @@ upd_link_and_node_and_marker = (
   marker_set
 ) => {
   link_set.selectAll("path").attr("stroke-width", (d) => Math.sqrt(d.weight))
+  let requirement_code_list = d3.filter(
+    filter_list,
+    (d) => d.type == "requirement"
+  )
+  requirement_code_list = d3.map(requirement_code_list, (d) => d.key_word_list)
+  requirement_code_list = requirement_code_list.flat()
+  let data_code_list = d3.filter(filter_list, (d) => d.type == "data")
+  data_code_list = d3.map(data_code_list, (d) => d.key_word_list)
+  data_code_list = data_code_list.flat()
+  requirement_code_list.forEach((req) => {
+    data_code_list.forEach((data) => {
+      link_set
+        .select(`.Topo_arrow_${req}_${data}`)
+        .attr("opacity", 1)
+        .attr("stroke", "red")
+    })
+  })
   let source_node = ""
   filter_list.forEach((d) => {
     d.key_word_list.forEach((k) => {
       node_set.select(`.node_${k}`).attr("d", (d) => path_form(d.group, 400))
-      console.log(`.Topo_arrow_${source_node}_${k}`, link_set)
-      link_set
-        .select(`.Topo_arrow_${source_node}_${k}`)
-        .attr("opacity", 1)
-        .attr("stroke", "red")
-      source_node = k
+      if (d.type == "solution") {
+        if (source_node == "") {
+          data_code_list.forEach((data) => {
+            link_set
+              .select(`.Topo_arrow_${data}_${k}`)
+              .attr("opacity", 1)
+              .attr("stroke", "red")
+          })
+        }
+        link_set
+          .select(`.Topo_arrow_${source_node}_${k}`)
+          .attr("opacity", 1)
+          .attr("stroke", "red")
+        source_node = k
+      }
     })
   })
+
 }
 
 create_class_edge = (id, d) => {
