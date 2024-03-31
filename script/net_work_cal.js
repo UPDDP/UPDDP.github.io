@@ -401,6 +401,10 @@ data_process = (data_original, filter_list = []) => {
       )
     }
   })
+  console.log("data_after_process")
+  console.log(data)
+  console.log("filter_list")
+  console.log(filter_list)
   return data
 }
 
