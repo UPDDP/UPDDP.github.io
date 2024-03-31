@@ -1,14 +1,1 @@
-{
-  "dataset": [
-    "tables",
-    "network_and_trees",
-    "fields",
-    "geometry",
-    "clusters_and_sets_and_lists",
-    "textual",
-    "temporal",
-    "media"
-  ],
-  "category": ["categorical", "ordinal", "quantitative", "parameter"],
-  "direction": ["sequential", "diverging", "cyclic"]
-}
+{"dataset": ["tables", "network_and_trees", "fields", "geometry", "clusters_and_sets_and_lists", "textual", "temporal", "media"], "category": ["categorical", "ordinal", "quantitative", "parameter"], "direction": ["sequential", "diverging", "cyclic"]}
