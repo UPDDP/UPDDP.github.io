@@ -34,7 +34,7 @@ init_node = (id, node, scale_set, simulation) => {
     .attr("class", (d) => `node node_${d.id}`)
     .attr("stroke", "white")
     .attr("stroke-width", 2)
-
+    .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
   node.call(
     d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended)
   )
@@ -122,8 +122,8 @@ upd_link_and_node_and_marker = (
           .select(`.Topo_arrow_${source_node}_${k}`)
           .attr("opacity", 1)
           .attr("stroke", "red")
+        source_node = k
       }
-      source_node = k
     })
   })
 }
@@ -959,7 +959,7 @@ function tabCorpus() {
         } else {
         }
       }) */
-      init_edge("#corpus", link, scale_set)
+
       let marker = main_svg
         .append("g")
         .attr("class", "markers")
@@ -974,8 +974,9 @@ function tabCorpus() {
         .selectAll(".node")
         .data(node_list, (d) => d.id)
         .join("path")
-
+      init_edge("#corpus", link, scale_set)
       init_node("#corpus", node, scale_set, simulation)
+      link.attr("d", link_path)
       simulation.on("tick", () => {
         link.attr("d", link_path)
 
