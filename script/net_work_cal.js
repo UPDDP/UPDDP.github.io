@@ -1089,6 +1089,7 @@ function tabCorpus() {
         true
       )
 
+      console.log(all_all_list)
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
       let scale_set = scale_set_create(topo_combination, all_all_list)
@@ -1125,7 +1126,7 @@ function tabCorpus() {
         } else {
         }
       }) */
-      //init_edge("#corpus", link.selectAll("path"), scale_set)
+      //
       let marker = main_svg.select(".marker").selectAll("defs")
       //.data(all_all_list)
       //.join("defs")
@@ -1136,7 +1137,8 @@ function tabCorpus() {
         .selectAll(".node")
         .data(node_list, (d) => d.id)
         .join("path")
-
+      init_edge("#corpus", link.selectAll("path"), scale_set)
+      init_node("#corpus", node.selectAll(".node"), scale_set, simulation)
       // Set the position attributes of links and nodes each time the simulation ticks.
 
       // Reheat the simulation when drag starts, and fix the subject position.
@@ -1159,7 +1161,7 @@ function tabCorpus() {
         event.subject.fx = null
         event.subject.fy = null
       }
-      //init_node("#corpus", node.selectAll(".node"), scale_set, simulation)
+      //
       node
         .selectAll(".node")
         .on("click", (event, d) => {
@@ -1213,6 +1215,17 @@ function tabCorpus() {
         marker_set,
         scale_set
       )
+      d3.select("#withdraw_button").on("click", () => {
+        filter_list_w = filter_list.slice(0, -1)
+        upd_force(
+          data_original,
+          req_topo,
+          data_topo,
+          sol_topo,
+          filter_list_w,
+          simulation
+        )
+      })
       node
         .selectAll(".node")
         .call(
@@ -1226,6 +1239,16 @@ function tabCorpus() {
     }
 
     draw_force(data_original, req_topo, data_topo, sol_topo, [])
+    d3.select("#corpus")
+      .select("svg")
+      .append("g")
+      .append("rect")
+      .attr("id", "withdraw_button")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", "red")
   })
 }
 
