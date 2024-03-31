@@ -80,7 +80,6 @@ upd_link_and_node_and_marker = (
         .select(`.Topo_arrow_${req}_${data}`)
         .attr("opacity", 1)
         .attr("stroke", "red")
-        .attr("stroke-width", (d) => scale_set.weight(d.weight))
       marker_set
         .select(`#Topo_arrow_${req}_${data}`)
         .attr("fill", (d) => "red")
@@ -101,7 +100,6 @@ upd_link_and_node_and_marker = (
               .select(`.Topo_arrow_${data}_${k}`)
               .attr("opacity", 1)
               .attr("stroke", "red")
-              .attr("stroke-width", (d) => scale_set.weight(d.weight))
             marker_set
               .select(`#Topo_arrow_${data}_${k}`)
               .attr("fill", (d) => "red")
@@ -110,19 +108,19 @@ upd_link_and_node_and_marker = (
               .attr("markerWidth", 2)
               .attr("markerHeight", 2.5)
           })
+        } else {
+          link_set
+            .select(`.Topo_arrow_${source_node}_${k}`)
+            .attr("opacity", 1)
+            .attr("stroke", "red")
+          marker_set
+            .select(`#Topo_arrow_${source_node}_${k}`)
+            .attr("fill", (d) => "red")
+            .attr("refX", 8)
+            .attr("refY", -0)
+            .attr("markerWidth", 2)
+            .attr("markerHeight", 2.5)
         }
-        link_set
-          .select(`.Topo_arrow_${source_node}_${k}`)
-          .attr("opacity", 1)
-          .attr("stroke", "red")
-          .attr("stroke-width", (d) => scale_set.weight(d.weight))
-        marker_set
-          .select(`#Topo_arrow_${source_node}_${k}`)
-          .attr("fill", (d) => "red")
-          .attr("refX", 8)
-          .attr("refY", -0)
-          .attr("markerWidth", 2)
-          .attr("markerHeight", 2.5)
 
         source_node = k
       }
@@ -1333,7 +1331,7 @@ scale_set_create = (topo_combination, all_all_list) => {
   scale_set["multlple_link_color"] = d3
     .scaleOrdinal()
     .domain(topo_combination["vis_axial_list"])
-  range(["#1f77b4", "#ff7f0e", "#2ca02c", "#2ca02c", "#2ca02c"])
+    .range(["#1f77b4", "#ff7f0e", "#2ca02c", "#2ca02c", "#2ca02c"])
   scale_set["weight"] = d3
     .scaleLinear()
     .domain(d3.extent(all_all_list, (d) => d.weight))
@@ -1587,9 +1585,3 @@ sol_iter_pure = (d, key_word_list, position) => {
   }
   return data_set
 }
-
-
-
-
-
-
