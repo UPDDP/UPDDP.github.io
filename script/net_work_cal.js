@@ -1,11 +1,13 @@
 let filter_list = []
 
+
+
 init_edge = (id, node, scale_set) => {
   node
     .attr("class", (d) => create_class_edge(id, d))
     .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
     .attr("stroke", (d) => link_color(d, scale_set))
-    .attr("stroke-width", (d) => Math.sqrt(d.weight))
+    .attr("stroke-width", (d) => scale_set.weight(d.weight))
     .attr("fill", "none")
     .attr("isCalled", "false")
     .attr("d", (d) => link_path(d))
@@ -32,7 +34,10 @@ init_node = (id, node, scale_set, simulation) => {
     .attr("d", (d) => path_form(d.group, 100))
     .attr("fill", (d) => scale_set.color_node_type(d.group))
     .attr("class", (d) => `node node_${d.id}`)
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
 }
+
 
 init_marker = (id, node, scale_set) => {
   node
@@ -43,8 +48,8 @@ init_marker = (id, node, scale_set) => {
       (d) => `Topo_arrow_strat_${d.source.id} Topo_arrow_end_${d.target.id}`
     )
     .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 15)
-    .attr("refY", -0.5)
+    .attr("refX", 10)
+    .attr("refY", -0)
     .attr("markerWidth", 4)
     .attr("markerHeight", 5)
     .attr("fill", (d) => "#999")
@@ -75,6 +80,14 @@ upd_link_and_node_and_marker = (
         .select(`.Topo_arrow_${req}_${data}`)
         .attr("opacity", 1)
         .attr("stroke", "red")
+        marker_set.select(`#Topo_arrow_${req}_${data}`)
+          .attr("fill", (d) => "red")
+          .attr("refX", 8)
+          .attr("refY", -0)
+          .attr("markerWidth", 2)
+          .attr("markerHeight", 2.5)
+
+
     })
   })
   let source_node = ""
@@ -88,14 +101,29 @@ upd_link_and_node_and_marker = (
               .select(`.Topo_arrow_${data}_${k}`)
               .attr("opacity", 1)
               .attr("stroke", "red")
+              marker_set.select(`#Topo_arrow_${data}_${k}`)    
+                .attr("fill", (d) => "red")
+                .attr("refX", 8)
+                .attr("refY", -0)
+                .attr("markerWidth", 2)
+                .attr("markerHeight", 2.5)
+
           })
         }
         link_set
           .select(`.Topo_arrow_${source_node}_${k}`)
           .attr("opacity", 1)
           .attr("stroke", "red")
-        source_node = k
+          marker_set.select(`#Topo_arrow_${source_node}_${k}`)    
+            .attr("fill", (d) => "red")
+            .attr("refX", 8)
+            .attr("refY", -0)
+            .attr("markerWidth", 2)
+            .attr("markerHeight", 2.5)
+
+            source_node = k
       }
+      
     })
   })
 }
@@ -154,7 +182,7 @@ tooltip_html = (id, d, type) => {
 path_form = (type, size) => {
   switch (type) {
     case 1:
-      return d3.symbol().type(d3.symbolSquare).size(size)()
+      return d3.symbol().type(d3.symbolSquare).size(size+40)()
       break
     case 2:
       return d3.symbol().type(d3.symbolTriangle).size(size)()
@@ -162,7 +190,7 @@ path_form = (type, size) => {
     case 3:
     case 4:
     case 5:
-      return d3.symbol().type(d3.symbolCircle).size(size)()
+      return d3.symbol().type(d3.symbolCircle).size(size+40)()
       break
     default:
       break
@@ -1281,16 +1309,21 @@ scale_set_create = (topo_combination, all_all_list) => {
     .range(Array.from(Array(topo_combination.all_list.length - 1).keys()))
   scale_set["all_linear_range"] = d3
     .scaleLog()
-    .domain(d3.extent(all_all_list, (d) => d.weight))
+    .domain(d3.extent(all_all_list, (d) => d.weight+1))
     .range([0, 1])
   scale_set["color_node_type"] = d3
     .scaleOrdinal()
-    .domain([1, 2, 3, 4, 5])
-    .range(d3.schemePastel1)
-  scale_set["multlple_link_color"] = d3
-    .scaleOrdinal()
-    .domain(topo_combination["vis_axial_list"])
-    .range(d3.schemeSet1)
+    .domain([1, 2, 3,4,5])
+    .range(["#1f77b4", "#ff7f0e", "#2ca02c","#5eb75e","#bae0ba"])
+
+scale_set['multlple_link_color'] =d3.scaleOrdinal().domain(topo_combination["vis_axial_list"]).range(["#1f77b4", "#ff7f0e", "#2ca02c","#2ca02c","#2ca02c"])
+
+  scale_set["weight"] = d3
+    .scaleLinear()
+    .domain(d3.extent(all_all_list, (d) => d.weight))
+    .range([1, 10])
+
+
   return scale_set
 }
 
