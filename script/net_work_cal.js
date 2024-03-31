@@ -1088,8 +1088,6 @@ function tabCorpus() {
         true,
         true
       )
-
-      console.log(all_all_list)
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
       let scale_set = scale_set_create(topo_combination, all_all_list)
@@ -1140,6 +1138,7 @@ function tabCorpus() {
       init_edge("#corpus", link.selectAll("path"), scale_set)
       init_node("#corpus", node.selectAll(".node"), scale_set, simulation)
       // Set the position attributes of links and nodes each time the simulation ticks.
+      link.selectAll("path").attr("d", link_path)
 
       // Reheat the simulation when drag starts, and fix the subject position.
       function dragstarted(event) {
@@ -1534,18 +1533,26 @@ data_filter_sol = (
     key_word_list = [key_word_list]
   }
   key_word_list = Array.from(key_word_list)
-
-  data = d3.filter(data, (d) =>
-    is_exclude
+  //console.log("before")
+  //console.log(data)
+  data = d3.filter(data, (d) => {
+    return is_exclude
       ? sol_iter_filter_exclude(d, key_word_list, position)
       : sol_iter_filter_not_exclude(d, key_word_list, position)
-  )
-  if (is_pure) {
-    data.forEach(
-      (d) => (d.data.solution_code = sol_iter_pure(d, key_word_list, position))
-    )
-  }
-  return data
+  })
+  let data_new = []
+  data.forEach((d) => {
+    let flag = is_exclude
+      ? sol_iter_filter_exclude(d, key_word_list, position)
+      : sol_iter_filter_not_exclude(d, key_word_list, position)
+    if (flag) {
+      //console.log("d__")
+      data_new.push(d)
+    }
+  })
+  // console.log("data")
+  //console.log(data)
+  return data_new
 }
 
 sol_iter_filter_exclude = (d, key_word_list, position) => {
@@ -1568,10 +1575,10 @@ sol_iter_filter_exclude = (d, key_word_list, position) => {
 }
 
 sol_iter_filter_not_exclude = (d, key_word_list, position) => {
-  if (position >= d.solution.length) {
-    return false
-  }
+  //console.log("position", position)
+  let flag = false
 
+  //console.log(d.solution)
   if (position == -1) {
     let sol_code_set = new Set()
     for (let i = 0; i < d.solution.length; i++) {
@@ -1581,19 +1588,47 @@ sol_iter_filter_not_exclude = (d, key_word_list, position) => {
     }
     for (let i in key_word_list) {
       if (sol_code_set.has(key_word_list[i])) {
-        return true
+        flag = true
       }
     }
     return false
   } else {
     for (let i in key_word_list) {
-      if (
+      /*      if (
         d.solution[position].componenet_code.indexOf(key_word_list[i]) != -1
       ) {
         return true
+      } */
+      let index = 0
+      let node_num = 0
+      while (index != position + 1) {
+        if (node_num == d.solution.length) {
+          break
+        }
+        if (d.solution[node_num].solution_category == "data_manipulation") {
+          //console.log(d.solution[node_num].componenet_code)
+          d.solution[node_num].componenet_code.forEach((k) => {
+            //console.log(k, key_word_list[i], k == key_word_list[i])
+            if (key_word_list.indexOf(k) != -1) {
+              flag = true
+              return true
+            }
+            index += 1
+          })
+          node_num += 1
+        } else {
+          if (
+            d.solution[node_num].componenet_code.indexOf(key_word_list[i]) != -1
+          ) {
+            flag = true
+          }
+          index += 1
+          node_num += 1
+        }
       }
     }
-    return false
+    //console.log("g")
+    return flag
   }
 }
 
