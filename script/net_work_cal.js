@@ -59,7 +59,6 @@ upd_link_and_node_and_marker = (
   node_set,
   marker_set
 ) => {
-  link_set.selectAll("path").attr("stroke-width", (d) => Math.sqrt(d.weight))
   let requirement_code_list = d3.filter(
     filter_list,
     (d) => d.type == "requirement"
@@ -94,11 +93,10 @@ upd_link_and_node_and_marker = (
           .select(`.Topo_arrow_${source_node}_${k}`)
           .attr("opacity", 1)
           .attr("stroke", "red")
-        source_node = k
       }
+      source_node = k
     })
   })
-
 }
 
 create_class_edge = (id, d) => {
@@ -804,11 +802,7 @@ function tabPattern() {
       d3.extent(all_all_list, (d) => d.weight + 1),
       [0, 1]
     )
-    console.log(
-      all_all_list[0].weight,
-      scale_opacity(all_all_list[0].weight),
-      scale_opacity(140)
-    )
+
     let main_svg = d3.select("#pattern").append("svg")
     let width = 1000
     let height = 1000
@@ -817,7 +811,7 @@ function tabPattern() {
       .attr("height", height)
       .attr("width", width)
       .attr("height", height)
-    console.log(all_all_list)
+
     main_svg
       .append("g")
       .attr("class", "matrix_1")
@@ -833,12 +827,6 @@ function tabPattern() {
       .attr("opacity", (d) => scale_opacity(+d.weight + 1))
       .attr("stroke", "grey")
       .on("mouseover", (event, d) => {
-        console.log(
-          event,
-          d,
-          d3.select(`#rect_${d.source}_${d.target}`).attr("opacity"),
-          this
-        )
         d3.select(`#rect_${d.source}_${d.target}`).attr("fill", "blue")
         add_tool_tip("#pattern", d, event.clientX, event.clientY, "link")
       })
@@ -895,7 +883,7 @@ function tabCorpus() {
         .attr("width", width)
         .attr("height", height)
 
-      let simulation = (d3.simulation = d3
+      let simulation = d3
         .forceSimulation()
         .nodes(node_list)
         .force(
@@ -904,10 +892,8 @@ function tabCorpus() {
         )
         .force("charge", d3.forceManyBody().strength(-800))
         .force("x", d3.forceX())
-        .force("y", d3.forceY())).force(
-        "center",
-        d3.forceCenter(width / 2, height / 2)
-      )
+        .force("y", d3.forceY())
+        .force("center", d3.forceCenter(width / 2, height / 2))
 
       const link = main_svg
         .append("g")
@@ -961,25 +947,6 @@ function tabCorpus() {
         node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
       })
 
-      function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart()
-        event.subject.fx = event.subject.x
-        event.subject.fy = event.subject.y
-      }
-
-      // Update the subject (dragged node) position during drag.
-      function dragged(event) {
-        event.subject.fx = event.x
-        event.subject.fy = event.y
-      }
-
-      // Restore the target alpha so the simulation cools after dragging ends.
-      // Unfix the subject position now that it’s no longer being dragged.
-      function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0)
-        event.subject.fx = null
-        event.subject.fy = null
-      }
       node
         .on("click", (event, d) => {
           if (req_topo.indexOf(d.id) != -1) {
@@ -1033,6 +1000,25 @@ function tabCorpus() {
             .on("end", dragended)
         )
       // Add a drag behavior.
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart()
+        event.subject.fx = event.subject.x
+        event.subject.fy = event.subject.y
+      }
+
+      // Update the subject (dragged node) position during drag.
+      function dragged(event) {
+        event.subject.fx = event.x
+        event.subject.fy = event.y
+      }
+
+      // Restore the target alpha so the simulation cools after dragging ends.
+      // Unfix the subject position now that it’s no longer being dragged.
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0)
+        event.subject.fx = null
+        event.subject.fy = null
+      }
     }
 
     let upd_force = (
@@ -1054,76 +1040,68 @@ function tabCorpus() {
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
       let scale_set = scale_set_create(topo_combination, all_all_list)
+
       let main_svg = d3.select("#corpus").select("svg")
       simulation.nodes(node_list).force(
         "link",
         d3.forceLink(all_all_list).id((d) => d.id)
       )
-      const link = main_svg.selectAll(".links")
-      link
+
+      const link_set = main_svg.selectAll(".links")
+      let link = link_set
         .selectAll("path")
         .data(
           all_all_list,
           (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
         )
         .join("path")
-      /*       .attr(
-        "class",
-        (d) =>
-          `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
-      )
-      .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
-      .attr("stroke", link_color)
-      .attr("stroke-width", (d) => Math.sqrt(d.weight))
-      .attr("fill", "none")
-      .attr("isCalled", "false")
-      .attr("d", (d) => linkArc(d))
-      .attr("marker-end", (d) => {
-        if (d.is_directional == 1) {
-          return `url(${new URL(
-            `#Topo_arrow_${d.source.id}_${d.target.id}`,
-            location
-          )})`
-        } else {
-        }
-      }) */
-      //init_edge("#corpus", link.selectAll("path"), scale_set)
-      let marker = main_svg.select(".marker").selectAll("defs")
-      //.data(all_all_list)
+        .attr("stroke", link_color)
+        .attr("stroke-width", (d) => Math.sqrt(d.weight))
+        .attr("fill", "none")
+        .attr("isCalled", "false")
+        .attr("d", (d) => link_path(d))
+        .attr("opacity", 0.3)
+        .attr("class", (d) => create_class_edge("corpus", d))
+        .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
+
       //.join("defs")
       let marker_set = main_svg.select(".markers")
       //init_marker("#corpus", marker, scale_set)
-      const node = main_svg.select(".nodes")
-      node
+      const node_set = main_svg.select(".nodes")
+      let node = node_set
         .selectAll(".node")
         .data(node_list, (d) => d.id)
         .join("path")
-
+        .attr("d", (d) => path_form(d.group, 100))
+        .attr("fill", (d) => scale_set.color_node_type(d.group))
+        .attr("class", (d) => `node node_${d.id}`)
+        .on("mouseover", (event, d) => {
+          add_tool_tip("#corpus", d, event.clientX, event.clientY, "node")
+        })
+        .on("mouseout", (event, d) => {
+          d3.select("#corpus").select("#custom_tooltip").remove()
+        })
+        .call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        )
+      init_edge("#corpus", link, scale_set)
+      init_node("#corpus", node, scale_set, simulation)
+      upd_link_and_node_and_marker(filter_list, link, node, marker_set)
       // Set the position attributes of links and nodes each time the simulation ticks.
+      simulation.on("tick", () => {
+        link.attr("d", link_path)
 
+        node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
+      })
       // Reheat the simulation when drag starts, and fix the subject position.
-      function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart()
-        event.subject.fx = event.subject.x
-        event.subject.fy = event.subject.y
-      }
 
-      // Update the subject (dragged node) position during drag.
-      function dragged(event) {
-        event.subject.fx = event.x
-        event.subject.fy = event.y
-      }
-
-      // Restore the target alpha so the simulation cools after dragging ends.
-      // Unfix the subject position now that it’s no longer being dragged.
-      function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0)
-        event.subject.fx = null
-        event.subject.fy = null
-      }
       //init_node("#corpus", node.selectAll(".node"), scale_set, simulation)
       node
-        .selectAll(".node")
+
         .on("click", (event, d) => {
           if (req_topo.indexOf(d.id) != -1) {
             filter_list.push({
@@ -1168,20 +1146,59 @@ function tabCorpus() {
         .on("mouseout", (event, d) => {
           d3.select("#corpus").select("#custom_tooltip").remove()
         })
-      upd_link_and_node_and_marker(filter_list, link, node, marker_set)
-      node
-        .selectAll(".node")
-        .call(
-          d3
-            .drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended)
+
+      node.call(
+        d3
+          .drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended)
+      )
+      d3.select("#withdraw_button").on("click", () => {
+        filter_list_w = filter_list.slice(0, -1)
+        upd_force(
+          data_original,
+          req_topo,
+          data_topo,
+          sol_topo,
+          filter_list_w,
+          simulation
         )
+      })
+      upd_link_and_node_and_marker(filter_list, link_set, node_set, marker_set)
       // Add a drag behavior.
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart()
+        event.subject.fx = event.subject.x
+        event.subject.fy = event.subject.y
+      }
+
+      // Update the subject (dragged node) position during drag.
+      function dragged(event) {
+        event.subject.fx = event.x
+        event.subject.fy = event.y
+      }
+
+      // Restore the target alpha so the simulation cools after dragging ends.
+      // Unfix the subject position now that it’s no longer being dragged.
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0)
+        event.subject.fx = null
+        event.subject.fy = null
+      }
     }
 
     draw_force(data_original, req_topo, data_topo, sol_topo, [])
+    d3.select("#corpus")
+      .select("svg")
+      .append("g")
+      .append("rect")
+      .attr("id", "withdraw_button")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", "red")
   })
 }
 
@@ -1254,7 +1271,7 @@ scale_set_create = (topo_combination, all_all_list) => {
     .scaleOrdinal()
     .domain(topo_combination.all_list)
     .range(Array.from(Array(topo_combination.all_list.length - 1).keys()))
-  console.log(d3.extent(all_all_list, (d) => d.weight))
+
   scale_set["all_linear_range"] = d3
     .scaleLog()
     .domain(d3.extent(all_all_list, (d) => d.weight))
