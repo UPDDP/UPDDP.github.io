@@ -899,7 +899,7 @@ function tabCorpus() {
         true
       )
       console.log(all_all_list)
-
+      //  all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 0)
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
       let scale_set = scale_set_create(topo_combination, all_all_list)
@@ -1242,6 +1242,7 @@ dict2list_co = (dict, is_category = false) => {
       in_key_index < in_key_list.length;
       in_key_index++
     ) {
+      let index_co = 0
       if (is_category) {
         for (const [key, value] of Object.entries(
           dict[out_key_list[out_key_index]][in_key_list[in_key_index]].pattern
@@ -1255,8 +1256,10 @@ dict2list_co = (dict, is_category = false) => {
             pattern_specify: key,
             pattern:
               dict[out_key_list[out_key_index]][in_key_list[in_key_index]]
-                .pattern
+                .pattern,
+            index_co: index_co
           })
+          index_co += 1
         }
       } else {
         list.push({
@@ -1270,7 +1273,7 @@ dict2list_co = (dict, is_category = false) => {
       }
     }
   }
-
+  console.log(list)
   return list
 }
 
@@ -1304,7 +1307,7 @@ scale_set_create = (topo_combination, all_all_list) => {
   scale_set["multlple_link_color"] = d3
     .scaleOrdinal()
     .domain(topo_combination["vis_axial_list"])
-    .range(d3.schemePastel1)
+    .range(d3.schemeSet1)
   return scale_set
 }
 
@@ -1338,8 +1341,25 @@ linkArc = (d) => {
 
 linkLine = (d) => {
   const path = d3.path()
-  path.moveTo(d.source.x, d.source.y)
-  path.lineTo(d.target.x, d.target.y)
+  let para = 3
+  let source_x = d.source.x
+  let source_y = d.source.y
+  let target_x = d.target.x
+  let target_y = d.target.y
+  let h = target_y - source_y
+  let l = target_x - source_x
+  let cos = l / Math.hypot(h, l)
+  let sin = h / Math.hypot(h, l)
+
+  if ("index" in d) {
+    source_x += parseInt(d.index_co / 2) * (-1) ** d.index * sin * para
+    source_y -= parseInt(d.index_co / 2) * (-1) ** d.index * cos * para
+    target_x += parseInt(d.index_co / 2) * (-1) ** d.index * sin * para
+    target_y -= parseInt(d.index_co / 2) * (-1) ** d.index * cos * para
+  }
+
+  path.moveTo(source_x, source_y)
+  path.lineTo(target_x, target_y)
   return path.toString()
 }
 
