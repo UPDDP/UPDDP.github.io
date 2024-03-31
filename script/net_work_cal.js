@@ -4,7 +4,7 @@ init_edge = (id, node, scale_set) => {
   node
     .attr("class", (d) => create_class_edge(id, d))
     .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
-    .attr("stroke", link_color)
+    .attr("stroke", (d) => link_color(d, scale_set))
     .attr("stroke-width", (d) => Math.sqrt(d.weight))
     .attr("fill", "none")
     .attr("isCalled", "false")
@@ -191,20 +191,22 @@ path_form = (type, size) => {
       return d3.symbol().type(d3.symbolTriangle).size(size)()
       break
     case 3:
-      return d3
-        .symbol()
-        .type(d3.symbolCircle)
-        .size(size + 40)()
+    case 4:
+    case 5:
+      return d3.symbol().type(d3.symbolCircle).size(size)()
       break
     default:
       break
   }
 }
 
-link_color = (d) => {
+link_color = (d, scale_set) => {
   if (d.is_directional == 1) {
     return "grey"
   } else {
+    if ("pattern_specify" in d) {
+      return scale_set.multlple_link_color(d.pattern_specify)
+    }
     return "black"
   }
 }
@@ -219,13 +221,19 @@ topo_building = (req, data, sol) => {
       ...sol["vis_component"],
       ...sol["interaction"]
     ],
+    vis_axial_list: [
+      ...sol["visualization"]["composite"],
+      ...sol["visualization"]["non_composite"]
+    ],
     data_manipulation_list: sol["data_manipulation"],
     interaction_list: sol["interaction"]
   }
   let all_list = []
   d3.map(topo.req_list, (d) => all_list.push({ id: d, group: 1 }))
   d3.map(topo.data_list, (d) => all_list.push({ id: d, group: 2 }))
-  d3.map(topo.sol_list, (d) => all_list.push({ id: d, group: 3 }))
+  d3.map(sol["data_manipulation"], (d) => all_list.push({ id: d, group: 3 }))
+  d3.map(sol["vis_component"], (d) => all_list.push({ id: d, group: 4 }))
+  d3.map(sol["interaction"], (d) => all_list.push({ id: d, group: 5 }))
 
   topo.all_list = all_list
 
@@ -446,19 +454,23 @@ upd_all_all_list = (
   data_original,
   topo_combination,
   filter_dict = [],
-  is_filter_zero_weight_link = true
+  is_filter_zero_weight_link = true,
+  is_category = false
 ) => {
   let data = data_process(data_original, filter_dict)
   let topo = edge_building_matrix_paper(data, topo_combination)
-
-  return link_building(topo, is_filter_zero_weight_link)
+  return link_building(topo, is_filter_zero_weight_link, is_category)
 }
 
-link_building = (topo, is_filter_zero_weight_link = true) => {
+link_building = (
+  topo,
+  is_filter_zero_weight_link = true,
+  is_category = false
+) => {
   let req_data_list = dict2list(topo.req_data_topo)
   let data_sol_list = dict2list(topo.data_sol_topo)
   let sol_sol_list = dict2list(topo.sol_sol_topo)
-  let sol_sol_co_list = dict2list_co(topo.sol_sol_co)
+  let sol_sol_co_list = dict2list_co(topo.sol_sol_co, is_category)
 
   let all_all_list = [...req_data_list, ...data_sol_list, ...sol_sol_list]
   all_all_list.forEach((d) => (d["is_directional"] = 1))
@@ -467,13 +479,11 @@ link_building = (topo, is_filter_zero_weight_link = true) => {
   if (is_filter_zero_weight_link) {
     all_all_list = d3.filter(all_all_list, (d) => d.weight != 0)
   }
-
   return all_all_list
 }
 
 link_complement = (all_all_list, topo_structure_list) => {
   let topo_structure_list_id = topo_structure_list.map((d) => d.id)
-
   for (let i = 0; i < topo_structure_list_id.length; i++) {
     for (let j = 0; j < topo_structure_list_id.length; j++) {
       if (
@@ -787,7 +797,8 @@ function tabPattern() {
       data_original,
       topo_combination,
       [],
-      (is_filter_zero_weight_link = false)
+      false,
+      true
     )
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
     let node_list = topo_combination.all_list.map((d) => ({ ...d }))
@@ -837,7 +848,6 @@ function tabPattern() {
       d3.extent(all_all_list, (d) => d.weight + 1),
       [0, 1]
     )
-
     let main_svg = d3.select("#pattern").append("svg")
     let width = 1000
     let height = 1000
@@ -846,7 +856,6 @@ function tabPattern() {
       .attr("height", height)
       .attr("width", width)
       .attr("height", height)
-
     main_svg
       .append("g")
       .attr("class", "matrix_1")
@@ -902,9 +911,11 @@ function tabCorpus() {
       let all_all_list = upd_all_all_list(
         data_original,
         topo_combination,
-        filter_list
+        filter_list,
+        true,
+        true
       )
-
+      //  all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 0)
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
       let scale_set = scale_set_create(topo_combination, all_all_list)
@@ -1065,11 +1076,12 @@ function tabCorpus() {
       simulation
     ) => {
       let topo_combination = topo_building(req_topo, data_topo, sol_topo)
-
       let all_all_list = upd_all_all_list(
         data_original,
         topo_combination,
-        filter_list
+        filter_list,
+        true,
+        true
       )
 
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
@@ -1261,7 +1273,7 @@ dict2list = (dict) => {
   return list
 }
 
-dict2list_co = (dict) => {
+dict2list_co = (dict, is_category = false) => {
   let list = []
   let out_key_list = Object.keys(dict)
   for (
@@ -1275,14 +1287,35 @@ dict2list_co = (dict) => {
       in_key_index < in_key_list.length;
       in_key_index++
     ) {
-      list.push({
-        source: out_key_list[out_key_index],
-        target: in_key_list[in_key_index],
-        weight:
-          dict[out_key_list[out_key_index]][in_key_list[in_key_index]].value,
-        pattern:
+      let index_co = 0
+      if (is_category) {
+        for (const [key, value] of Object.entries(
           dict[out_key_list[out_key_index]][in_key_list[in_key_index]].pattern
-      })
+        )) {
+          list.push({
+            source: out_key_list[out_key_index],
+            target: in_key_list[in_key_index],
+            weight:
+              dict[out_key_list[out_key_index]][in_key_list[in_key_index]]
+                .pattern[key],
+            pattern_specify: key,
+            pattern:
+              dict[out_key_list[out_key_index]][in_key_list[in_key_index]]
+                .pattern,
+            index_co: index_co
+          })
+          index_co += 1
+        }
+      } else {
+        list.push({
+          source: out_key_list[out_key_index],
+          target: in_key_list[in_key_index],
+          weight:
+            dict[out_key_list[out_key_index]][in_key_list[in_key_index]].value,
+          pattern:
+            dict[out_key_list[out_key_index]][in_key_list[in_key_index]].pattern
+        })
+      }
     }
   }
   return list
@@ -1306,16 +1339,18 @@ scale_set_create = (topo_combination, all_all_list) => {
     .scaleOrdinal()
     .domain(topo_combination.all_list)
     .range(Array.from(Array(topo_combination.all_list.length - 1).keys()))
-
   scale_set["all_linear_range"] = d3
     .scaleLog()
     .domain(d3.extent(all_all_list, (d) => d.weight))
     .range([0, 1])
   scale_set["color_node_type"] = d3
     .scaleOrdinal()
-    .domain([1, 2, 3])
-    .range(["#1f77b4", "#ff7f0e", "#2ca02c"])
-
+    .domain([1, 2, 3, 4, 5])
+    .range(d3.schemePastel1)
+  scale_set["multlple_link_color"] = d3
+    .scaleOrdinal()
+    .domain(topo_combination["vis_axial_list"])
+    .range(d3.schemeSet1)
   return scale_set
 }
 
@@ -1349,8 +1384,25 @@ linkArc = (d) => {
 
 linkLine = (d) => {
   const path = d3.path()
-  path.moveTo(d.source.x, d.source.y)
-  path.lineTo(d.target.x, d.target.y)
+  let para = 3
+  let source_x = d.source.x
+  let source_y = d.source.y
+  let target_x = d.target.x
+  let target_y = d.target.y
+  let h = target_y - source_y
+  let l = target_x - source_x
+  let cos = l / Math.hypot(h, l)
+  let sin = h / Math.hypot(h, l)
+
+  if ("index" in d) {
+    source_x += parseInt(d.index_co / 2) * (-1) ** d.index * sin * para
+    source_y -= parseInt(d.index_co / 2) * (-1) ** d.index * cos * para
+    target_x += parseInt(d.index_co / 2) * (-1) ** d.index * sin * para
+    target_y -= parseInt(d.index_co / 2) * (-1) ** d.index * cos * para
+  }
+
+  path.moveTo(source_x, source_y)
+  path.lineTo(target_x, target_y)
   return path.toString()
 }
 
