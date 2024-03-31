@@ -1,1 +1,46 @@
-{"data_manipulation": ["real_time_input", "user_input", "algorithmic_calculation", "modeling", "clustering_and_grouping", "excluding", "sampling", "dimensionality_reduction", "feature_selection", "retrieval", "similarity_calculation", "explainability", "rectification", "parameter_tuning", "wrangling"], "visualization": {"composite": ["repetition", "mirror", "stack", "co_axis", "coordinate", "annotation", "large_panel", "nesting"], "non_composite": ["aligned", "flexible", "basics"]}, "interaction": ["filtering", "selecting", "abstract_elaborate", "overview_and_explore", "connect_relate", "reconfigure", "encode", "history", "extraction_of_features", "participation_collaboration", "gamification"], "vis_component": ["area", "image", "circle", "tree", "parallelcoordinates", "bar", "table", "scatter", "video", "network", "vector", "heatmap", "radar", "map", "matrix", "hexagonarea", "boxplot", "3Dstructure", "text", "contour", "icicle", "glyph", "distancevs", "correlationplots", "radialbar", "line", "pie", "sankey", "donut", "bubble", "animation", "arc", "link", "rectangle", "chord", "flow", "others", "stripe", "point", "Image", "stacked_area", "heat_map", "stakced_bar", "bar_chart", "wordcloud", "", "graph", "PCP", "Mtrix", "heap_map", "tree_map", "word_cloud", "stacked_bar", "Bubble", "Box_plot", "scatter_plot", "violin_graph", "quantitative"]}
+{
+  "data_manipulation": [
+    "real_time_input",
+    "user_input",
+    "algorithmic_calculation",
+    "modeling",
+    "clustering_and_grouping",
+    "excluding",
+    "sampling",
+    "dimensionality_reduction",
+    "feature_selection",
+    "retrieval",
+    "similarity_calculation",
+    "explainability",
+    "rectification",
+    "parameter_tuning",
+    "wrangling"
+  ],
+  "visualization": {
+    "composite": [
+      "repetition",
+      "mirror",
+      "stack",
+      "co_axis",
+      "coordinate",
+      "annotation",
+      "large_panel",
+      "nesting"
+    ],
+    "non_composite": ["aligned", "flexible", "basics"]
+  },
+  "interaction": [
+    "filtering",
+    "selecting",
+    "abstract_elaborate",
+    "overview_and_explore",
+    "connect_relate",
+    "reconfigure",
+    "encode",
+    "history",
+    "extraction_of_features",
+    "participation_collaboration",
+    "gamification"
+  ],
+  "vis_component": ["distancevs", "correlationplots", "net"]
+}
