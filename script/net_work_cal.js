@@ -61,13 +61,13 @@ init_node = (id, node, scale_set, simulation) => {
   }
 }
 
-upd_link_and_node = (filter_list, link, node) => {
+upd_link_and_node = (filter_list, link_set, node_set) => {
   let source_node = ""
   filter_list.forEach((d) => {
     d.key_word_list.forEach((k) => {
-      node.select(`.node_${k}`).attr("d", (d) => path_form(d.group, 400))
+      node_set.select(`.node_${k}`).attr("d", (d) => path_form(d.group, 400))
 
-      link
+      link_set
         .select(`.Topo_arrow_${source_node}_${k}`)
         .attr("opacity", 1)
         .attr("stroke", "red")
