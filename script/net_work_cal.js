@@ -64,7 +64,6 @@ upd_link_and_node_and_marker = (
   node_set,
   marker_set
 ) => {
-  link_set.selectAll("path").attr("stroke-width", (d) => Math.sqrt(d.weight))
   let requirement_code_list = d3.filter(
     filter_list,
     (d) => d.type == "requirement"
@@ -79,7 +78,7 @@ upd_link_and_node_and_marker = (
       link_set
         .select(`.Topo_arrow_${req}_${data}`)
         .attr("opacity", 1)
-        .attr("stroke", "red")
+        .attr("stroke", "red") .attr("stroke-width", (d) => scale_set.weight(d.weight))
         marker_set.select(`#Topo_arrow_${req}_${data}`)
           .attr("fill", (d) => "red")
           .attr("refX", 8)
@@ -100,7 +99,7 @@ upd_link_and_node_and_marker = (
             link_set
               .select(`.Topo_arrow_${data}_${k}`)
               .attr("opacity", 1)
-              .attr("stroke", "red")
+              .attr("stroke", "red") .attr("stroke-width", (d) => scale_set.weight(d.weight))
               marker_set.select(`#Topo_arrow_${data}_${k}`)    
                 .attr("fill", (d) => "red")
                 .attr("refX", 8)
@@ -114,6 +113,7 @@ upd_link_and_node_and_marker = (
           .select(`.Topo_arrow_${source_node}_${k}`)
           .attr("opacity", 1)
           .attr("stroke", "red")
+          .attr("stroke-width", (d) => scale_set.weight(d.weight))
           marker_set.select(`#Topo_arrow_${source_node}_${k}`)    
             .attr("fill", (d) => "red")
             .attr("refX", 8)
