@@ -61,7 +61,31 @@ init_node = (id, node, scale_set, simulation) => {
   }
 }
 
-upd_link_and_node = (filter_list, link_set, node_set) => {
+init_marker = (id, node, scale_set) => {
+  node
+    .append("marker")
+    .attr("id", (d) => `Topo_arrow_${d.source.id}_${d.target.id}`)
+    .attr(
+      "class",
+      (d) => `Topo_arrow_strat_${d.source.id} Topo_arrow_end_${d.target.id}`
+    )
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 15)
+    .attr("refY", -0.5)
+    .attr("markerWidth", 4)
+    .attr("markerHeight", 5)
+    .attr("fill", (d) => "#999")
+    .attr("orient", "auto")
+    .append("path")
+    .attr("d", "M0,-5L10,0L0,5")
+}
+
+upd_link_and_node_and_marker = (
+  filter_list,
+  link_set,
+  node_set,
+  marker_set
+) => {
   let source_node = ""
   filter_list.forEach((d) => {
     d.key_word_list.forEach((k) => {
@@ -891,27 +915,13 @@ function tabCorpus() {
         }
       }) */
       init_edge("#corpus", link, scale_set)
-      main_svg
+      let marker = main_svg
         .append("g")
-        .attr("class", "marker")
+        .attr("class", "markers")
         .selectAll("defs")
         .data(all_all_list)
         .join("defs")
-        .append("marker")
-        .attr("id", (d) => `Topo_arrow_${d.source.id}_${d.target.id}`)
-        .attr(
-          "class",
-          (d) => `Topo_arrow_strat_${d.source.id} Topo_arrow_end_${d.target.id}`
-        )
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 15)
-        .attr("refY", -0.5)
-        .attr("markerWidth", 4)
-        .attr("markerHeight", 5)
-        .attr("fill", (d) => "#999")
-        .attr("orient", "auto")
-        .append("path")
-        .attr("d", "M0,-5L10,0L0,5")
+      init_marker("#corpus", marker, scale_set)
 
       const node = main_svg
         .append("g")
@@ -1021,31 +1031,17 @@ function tabCorpus() {
         } else {
         }
       }) */
-      init_edge("#corpus", link.selectAll("path"), scale_set)
-      main_svg
+      //init_edge("#corpus", link.selectAll("path"), scale_set)
+      let marker = main_svg
         .select(".marker")
         .selectAll("defs")
         .data(all_all_list)
         .join("defs")
-        .append("marker")
-        .attr("id", (d) => `Topo_arrow_${d.source.id}_${d.target.id}`)
-        .attr(
-          "class",
-          (d) => `Topo_arrow_strat_${d.source.id} Topo_arrow_end_${d.target.id}`
-        )
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 15)
-        .attr("refY", -0.5)
-        .attr("markerWidth", 4)
-        .attr("markerHeight", 5)
-        .attr("fill", (d) => "#999")
-        .attr("orient", "auto")
-        .append("path")
-        .attr("d", "M0,-5L10,0L0,5")
-
+      let marker_set = main_svg.select(".markers")
+      // init_marker("#corpus", marker, scale_set)
       const node = main_svg.select(".nodes")
       node.selectAll(".node").data(node_list).join("path")
-      init_node("#corpus", node.selectAll(".node"), scale_set, simulation)
+      //init_node("#corpus", node.selectAll(".node"), scale_set, simulation)
       node
         .selectAll(".node")
         .on("click", (event, d) => {
@@ -1092,7 +1088,7 @@ function tabCorpus() {
         .on("mouseout", (event, d) => {
           d3.select("#corpus").select("#custom_tooltip").remove()
         })
-      upd_link_and_node(filter_list, link, node)
+      upd_link_and_node_and_marker(filter_list, link, node, marker_set)
       // Add a drag behavior.
     }
 
