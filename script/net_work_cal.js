@@ -4,7 +4,7 @@ init_edge = (id, node, scale_set) => {
   node
     .attr("class", (d) => create_class_edge(id, d))
     .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
-    .attr("stroke", link_color)
+    .attr("stroke", (d) => link_color(d, scale_set))
     .attr("stroke-width", (d) => Math.sqrt(d.weight))
     .attr("fill", "none")
     .attr("isCalled", "false")
@@ -160,6 +160,8 @@ path_form = (type, size) => {
       return d3.symbol().type(d3.symbolTriangle).size(size)()
       break
     case 3:
+    case 4:
+    case 5:
       return d3.symbol().type(d3.symbolCircle).size(size)()
       break
     default:
@@ -167,10 +169,13 @@ path_form = (type, size) => {
   }
 }
 
-link_color = (d) => {
+link_color = (d, scale_set) => {
   if (d.is_directional == 1) {
     return "grey"
   } else {
+    if ("pattern_specify" in d) {
+      return scale_set.multlple_link_color(d.pattern_specify)
+    }
     return "black"
   }
 }
@@ -185,13 +190,19 @@ topo_building = (req, data, sol) => {
       ...sol["vis_component"],
       ...sol["interaction"]
     ],
+    vis_axial_list: [
+      ...sol["visualization"]["composite"],
+      ...sol["visualization"]["non_composite"]
+    ],
     data_manipulation_list: sol["data_manipulation"],
     interaction_list: sol["interaction"]
   }
   let all_list = []
   d3.map(topo.req_list, (d) => all_list.push({ id: d, group: 1 }))
   d3.map(topo.data_list, (d) => all_list.push({ id: d, group: 2 }))
-  d3.map(topo.sol_list, (d) => all_list.push({ id: d, group: 3 }))
+  d3.map(sol["data_manipulation"], (d) => all_list.push({ id: d, group: 3 }))
+  d3.map(sol["vis_component"], (d) => all_list.push({ id: d, group: 4 }))
+  d3.map(sol["interaction"], (d) => all_list.push({ id: d, group: 5 }))
 
   topo.all_list = all_list
 
@@ -757,7 +768,8 @@ function tabPattern() {
       data_original,
       topo_combination,
       [],
-      (is_filter_zero_weight_link = false)
+      false,
+      true
     )
     //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
     let node_list = topo_combination.all_list.map((d) => ({ ...d }))
@@ -1287,9 +1299,12 @@ scale_set_create = (topo_combination, all_all_list) => {
     .range([0, 1])
   scale_set["color_node_type"] = d3
     .scaleOrdinal()
-    .domain([1, 2, 3])
-    .range(["#1f77b4", "#ff7f0e", "#2ca02c"])
-
+    .domain([1, 2, 3, 4, 5])
+    .range(d3.schemePastel1)
+  scale_set["multlple_link_color"] = d3
+    .scaleOrdinal()
+    .domain(topo_combination["vis_axial_list"])
+    .range(d3.schemePastel1)
   return scale_set
 }
 
