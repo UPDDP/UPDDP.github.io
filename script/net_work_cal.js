@@ -29,7 +29,7 @@ init_edge = (id, node, scale_set) => {
 
 init_node = (id, node, scale_set, simulation) => {
   node
-    .attr("d", (d) => path_form(d.group, 100))
+    .attr("d", (d) => path_form(d.group, scale_set.linear_node_size(d.weight)))
     .attr("fill", (d) => scale_set.color_node_type(d.group))
     .attr("class", (d) => `node node_${d.id}`)
     .attr("stroke", "white")
@@ -65,6 +65,7 @@ upd_link_and_node_and_marker = (
   link_set
     .selectAll(".lines")
     .attr("stroke-width", (d) => scale_set.weight(d.weight))
+  // nodes.selectall(".node").attr("d", (d) => path_form(d.group, 400))
   let requirement_code_list = d3.filter(
     filter_list,
     (d) => d.type == "requirement"
@@ -92,7 +93,10 @@ upd_link_and_node_and_marker = (
   let source_node = ""
   filter_list.forEach((d) => {
     d.key_word_list.forEach((k) => {
-      node_set.select(`.node_${k}`).attr("d", (d) => path_form(d.group, 400))
+      //node_set.select(`.node_${k}`).attr("d", (d) => path_form(d.group, 400))
+      // gaoshh1
+      node_set.select(`.node_${k}`).attr("stroke", "red")
+
       if (d.type == "solution") {
         if (source_node == "") {
           data_code_list.forEach((data) => {
@@ -921,8 +925,21 @@ function tabCorpus() {
       //  all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 0)
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
-      let scale_set = scale_set_create(topo_combination, all_all_list)
 
+      //gaoshh1
+      node_list.forEach((d, index) => {
+        node_list[index].weight = d3.sum(
+          d3.filter(all_all_list, (l) => l.source == d.id || l.target == d.id),
+          (l) => l.weight
+        )
+      })
+      console.log(node_list)
+      console.log(all_all_list)
+      let scale_set = scale_set_create(topo_combination, all_all_list)
+      scale_set.linear_node_size = d3
+        .scaleLinear()
+        .domain(d3.extent(node_list, (d) => d.weight))
+        .range([100, 1600])
       let main_svg = d3.select("#corpus").append("svg")
       let width = 1000
       let height = 1000
@@ -1089,8 +1106,19 @@ function tabCorpus() {
         true
       )
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
+      //gaoshh1
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
+      node_list.forEach((d, index) => {
+        node_list[index].weight = d3.sum(
+          d3.filter(all_all_list, (l) => l.source == d.id || l.target == d.id),
+          (l) => l.weight
+        )
+      })
       let scale_set = scale_set_create(topo_combination, all_all_list)
+      scale_set.linear_node_size = d3
+        .scaleLinear()
+        .domain(d3.extent(node_list, (d) => d.weight))
+        .range([100, 800])
       let main_svg = d3.select("#corpus").select("svg")
       simulation.nodes(node_list).force(
         "link",
