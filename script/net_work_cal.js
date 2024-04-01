@@ -929,7 +929,11 @@ function tabCorpus() {
       //gaoshh1
       node_list.forEach((d, index) => {
         node_list[index].weight = d3.sum(
-          d3.filter(all_all_list, (l) => l.source == d.id || l.target == d.id),
+          d3.filter(
+            all_all_list,
+            (l) =>
+              (l.source == d.id || l.target == d.id) && l.is_directional == 1
+          ),
           (l) => l.weight
         )
       })
@@ -1110,7 +1114,11 @@ function tabCorpus() {
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
       node_list.forEach((d, index) => {
         node_list[index].weight = d3.sum(
-          d3.filter(all_all_list, (l) => l.source == d.id || l.target == d.id),
+          d3.filter(
+            all_all_list,
+            (l) =>
+              (l.source == d.id || l.target == d.id) && l.is_directional == 1
+          ),
           (l) => l.weight
         )
       })
