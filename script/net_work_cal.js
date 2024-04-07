@@ -23,7 +23,7 @@ init_edge = (id, node, scale_set) => {
       add_tool_tip(id, d, event.clientX, event.clientY, "link")
     })
     .on("mouseout", (event, d) => {
-      d3.select("#corpus").select("#custom_tooltip").remove()
+      d3.select("#explore").select("#custom_tooltip").remove()
     })
 }
 
@@ -134,7 +134,7 @@ upd_link_and_node_and_marker = (
 
 create_class_edge = (id, d) => {
   switch (id) {
-    case "#corpus":
+    case "#explore":
       return d.is_directional
         ? `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id} Topo_arrow_${d.source.id}_${d.target.id}`
         : `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id} Topo_co_${d.source.id}_${d.target.id} Topo_co_${d.target.id}_${d.source.id}`
@@ -172,7 +172,7 @@ tooltip_html = (id, d, type) => {
       break
     case "link":
       switch (id) {
-        case "#corpus":
+        case "#explore":
           return `This link is from ${d.source.id} to ${d.target.id} <br/> It's weight is ${d.weight}`
         case "#pattern":
           return `This link is from ${d.source} to ${d.target} <br/> It's weight is ${d.weight}`
@@ -780,6 +780,393 @@ function tabExplore() {
   document.getElementsByClassName("nav-link")[2].classList.remove("active")
   document.getElementsByClassName("nav-link")[3].classList.remove("active")
   document.getElementsByClassName("nav-link")[1].classList.add("active")
+
+  Promise.all([
+    d3.json("./static/data.json"),
+    d3.json("./static/requirement_topo.json"),
+    d3.json("./static/data_topo.json"),
+    d3.json("./static/sol_topo.json")
+  ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
+    d3.select("#explore").select("svg").remove()
+    let draw_force = (
+      data_original,
+      req_topo,
+      data_topo,
+      sol_topo,
+      filter_list = []
+    ) => {
+      let topo_combination = topo_building(req_topo, data_topo, sol_topo)
+
+      let all_all_list = upd_all_all_list(
+        data_original,
+        topo_combination,
+        filter_list,
+        true,
+        true
+      )
+      //  all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 0)
+      //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
+      let node_list = topo_combination.all_list.map((d) => ({ ...d }))
+
+      //gaoshh1
+      node_list.forEach((d, index) => {
+        node_list[index].weight = d3.sum(
+          d3.filter(
+            all_all_list,
+            (l) =>
+              (l.source == d.id || l.target == d.id) && l.is_directional == 1
+          ),
+          (l) => l.weight
+        )
+      })
+      console.log(node_list)
+      console.log(all_all_list)
+      let scale_set = scale_set_create(topo_combination, all_all_list)
+      scale_set.linear_node_size = d3
+        .scaleLinear()
+        .domain(d3.extent(node_list, (d) => d.weight))
+        .range([100, 1600])
+      let main_svg = d3.select("#explore").append("svg")
+      let width = 1000
+      let height = 1000
+      main_svg
+        .attr("width", width)
+        .attr("height", height)
+        .attr("width", width)
+        .attr("height", height)
+
+      let simulation = (d3.simulation = d3
+        .forceSimulation()
+        .nodes(node_list)
+        .force(
+          "link",
+          d3.forceLink(all_all_list).id((d) => d.id)
+        )
+        .force("charge", d3.forceManyBody().strength(-800))
+        .force("x", d3.forceX())
+        .force("y", d3.forceY())).force(
+        "center",
+        d3.forceCenter(width / 2, height / 2)
+      )
+
+      const link = main_svg
+        .append("g")
+        .attr("class", "links")
+        .selectAll("path")
+        .data(
+          all_all_list,
+          (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
+        )
+        .join("path")
+      /*       .attr(
+        "class",
+        (d) =>
+          `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
+      )
+      .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
+      .attr("stroke", link_color)
+      .attr("stroke-width", (d) => Math.sqrt(d.weight))
+      .attr("fill", "none")
+      .attr("isCalled", "false")
+      .attr("d", (d) => linkArc(d))
+      .attr("marker-end", (d) => {
+        if (d.is_directional == 1) {
+          return `url(${new URL(
+            `#Topo_arrow_${d.source.id}_${d.target.id}`,
+            location
+          )})`
+        } else {
+        }
+      }) */
+      init_edge("#explore", link, scale_set)
+      let marker = main_svg
+        .append("g")
+        .attr("class", "markers")
+        .selectAll("defs")
+        .data(all_all_list)
+        .join("defs")
+      init_marker("#explore", marker, scale_set)
+
+      const node = main_svg
+        .append("g")
+        .attr("class", "nodes")
+        .selectAll(".node")
+        .data(node_list, (d) => d.id)
+        .join("path")
+
+      init_node("#explore", node, scale_set, simulation)
+      simulation.on("tick", () => {
+        link.attr("d", link_path)
+
+        node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
+      })
+
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart()
+        event.subject.fx = event.subject.x
+        event.subject.fy = event.subject.y
+      }
+
+      // Update the subject (dragged node) position during drag.
+      function dragged(event) {
+        event.subject.fx = event.x
+        event.subject.fy = event.y
+      }
+
+      // Restore the target alpha so the simulation cools after dragging ends.
+      // Unfix the subject position now that it’s no longer being dragged.
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0)
+        event.subject.fx = null
+        event.subject.fy = null
+      }
+      node
+        .on("click", (event, d) => {
+          if (req_topo.indexOf(d.id) != -1) {
+            filter_list.push({
+              type: "requirement",
+              key_word_list: [d.id],
+              is_exclude: false,
+              is_pure: false
+            })
+          } else if (
+            data_topo.dataset.indexOf(d.id) != -1 ||
+            data_topo.category.indexOf(d.id) != -1 ||
+            data_topo.direction.indexOf(d.id) != -1
+          ) {
+            filter_list.push({
+              type: "data",
+              key_word_list: [d.id],
+              is_exclude: false,
+              is_pure: false
+            })
+          } else {
+            filter_list.push({
+              type: "solution",
+              key_word_list: [d.id],
+              is_exclude: false,
+              is_pure: false,
+              position: d3.filter(filter_list, (d) => d.type == "solution")
+                .length
+            })
+          }
+          upd_force(
+            data_original,
+            req_topo,
+            data_topo,
+            sol_topo,
+            filter_list,
+            simulation
+          )
+        })
+        .on("mouseover", (event, d) => {
+          add_tool_tip("#explore", d, event.clientX, event.clientY, "node")
+        })
+        .on("mouseout", (event, d) => {
+          d3.select("#explore").select("#custom_tooltip").remove()
+        })
+        .call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        )
+      // Add a drag behavior.
+    }
+
+    let upd_force = (
+      data_original,
+      req_topo,
+      data_topo,
+      sol_topo,
+      filter_list = [],
+      simulation
+    ) => {
+      let topo_combination = topo_building(req_topo, data_topo, sol_topo)
+      let all_all_list = upd_all_all_list(
+        data_original,
+        topo_combination,
+        filter_list,
+        true,
+        true
+      )
+      //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
+      //gaoshh1
+      let node_list = topo_combination.all_list.map((d) => ({ ...d }))
+      node_list.forEach((d, index) => {
+        node_list[index].weight = d3.sum(
+          d3.filter(
+            all_all_list,
+            (l) =>
+              (l.source == d.id || l.target == d.id) && l.is_directional == 1
+          ),
+          (l) => l.weight
+        )
+      })
+      let scale_set = scale_set_create(topo_combination, all_all_list)
+      scale_set.linear_node_size = d3
+        .scaleLinear()
+        .domain(d3.extent(node_list, (d) => d.weight))
+        .range([100, 800])
+      let main_svg = d3.select("#explore").select("svg")
+      simulation.nodes(node_list).force(
+        "link",
+        d3.forceLink(all_all_list).id((d) => d.id)
+      )
+      const link = main_svg.selectAll(".links")
+      link
+        .selectAll("path")
+        .data(
+          all_all_list,
+          (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
+        )
+        .join("path")
+      /*       .attr(
+        "class",
+        (d) =>
+          `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
+      )
+      .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
+      .attr("stroke", link_color)
+      .attr("stroke-width", (d) => Math.sqrt(d.weight))
+      .attr("fill", "none")
+      .attr("isCalled", "false")
+      .attr("d", (d) => linkArc(d))
+      .attr("marker-end", (d) => {
+        if (d.is_directional == 1) {
+          return `url(${new URL(
+            `#Topo_arrow_${d.source.id}_${d.target.id}`,
+            location
+          )})`
+        } else {
+        }
+      }) */
+      //
+      let marker = main_svg.select(".marker").selectAll("defs")
+      //.data(all_all_list)
+      //.join("defs")
+      let marker_set = main_svg.select(".markers")
+      //init_marker("#explore", marker, scale_set)
+      const node = main_svg.select(".nodes")
+      node
+        .selectAll(".node")
+        .data(node_list, (d) => d.id)
+        .join("path")
+      init_edge("#explore", link.selectAll("path"), scale_set)
+      init_node("#explore", node.selectAll(".node"), scale_set, simulation)
+      // Set the position attributes of links and nodes each time the simulation ticks.
+      link.selectAll("path").attr("d", link_path)
+
+      // Reheat the simulation when drag starts, and fix the subject position.
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart()
+        event.subject.fx = event.subject.x
+        event.subject.fy = event.subject.y
+      }
+
+      // Update the subject (dragged node) position during drag.
+      function dragged(event) {
+        event.subject.fx = event.x
+        event.subject.fy = event.y
+      }
+
+      // Restore the target alpha so the simulation cools after dragging ends.
+      // Unfix the subject position now that it’s no longer being dragged.
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0)
+        event.subject.fx = null
+        event.subject.fy = null
+      }
+      //
+      node
+        .selectAll(".node")
+        .on("click", (event, d) => {
+          if (req_topo.indexOf(d.id) != -1) {
+            filter_list.push({
+              type: "requirement",
+              key_word_list: [d.id],
+              is_exclude: false,
+              is_pure: false
+            })
+          } else if (
+            data_topo.dataset.indexOf(d.id) != -1 ||
+            data_topo.category.indexOf(d.id) != -1 ||
+            data_topo.direction.indexOf(d.id) != -1
+          ) {
+            filter_list.push({
+              type: "data",
+              key_word_list: [d.id],
+              is_exclude: false,
+              is_pure: false
+            })
+          } else {
+            filter_list.push({
+              type: "solution",
+              key_word_list: [d.id],
+              is_exclude: false,
+              is_pure: false,
+              position: d3.filter(filter_list, (d) => d.type == "solution")
+                .length
+            })
+          }
+          upd_force(
+            data_original,
+            req_topo,
+            data_topo,
+            sol_topo,
+            filter_list,
+            simulation
+          )
+        })
+        .on("mouseover", (event, d) => {
+          add_tool_tip("#explore", d, event.clientX, event.clientY, "node")
+        })
+        .on("mouseout", (event, d) => {
+          d3.select("#explore").select("#custom_tooltip").remove()
+        })
+      upd_link_and_node_and_marker(
+        filter_list,
+        link,
+        node,
+        marker_set,
+        scale_set
+      )
+      d3.select("#withdraw_button").on("click", () => {
+        filter_list_w = filter_list.slice(0, -1)
+        upd_force(
+          data_original,
+          req_topo,
+          data_topo,
+          sol_topo,
+          filter_list_w,
+          simulation
+        )
+      })
+      node
+        .selectAll(".node")
+        .call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        )
+      // Add a drag behavior.
+    }
+
+    draw_force(data_original, req_topo, data_topo, sol_topo, [])
+    d3.select("#explore")
+      .select("svg")
+      .append("g")
+      .append("rect")
+      .attr("id", "withdraw_button")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", "red")
+  })
 }
 function tabPattern() {
   document.getElementById("about").style.display = "none"
@@ -899,392 +1286,7 @@ function tabCorpus() {
   document.getElementsByClassName("nav-link")[3].classList.remove("active")
   document.getElementsByClassName("nav-link")[3].classList.add("active")
 
-  Promise.all([
-    d3.json("./static/data.json"),
-    d3.json("./static/requirement_topo.json"),
-    d3.json("./static/data_topo.json"),
-    d3.json("./static/sol_topo.json")
-  ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
-    d3.select("#corpus").select("svg").remove()
-    let draw_force = (
-      data_original,
-      req_topo,
-      data_topo,
-      sol_topo,
-      filter_list = []
-    ) => {
-      let topo_combination = topo_building(req_topo, data_topo, sol_topo)
 
-      let all_all_list = upd_all_all_list(
-        data_original,
-        topo_combination,
-        filter_list,
-        true,
-        true
-      )
-      //  all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 0)
-      //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
-      let node_list = topo_combination.all_list.map((d) => ({ ...d }))
-
-      //gaoshh1
-      node_list.forEach((d, index) => {
-        node_list[index].weight = d3.sum(
-          d3.filter(
-            all_all_list,
-            (l) =>
-              (l.source == d.id || l.target == d.id) && l.is_directional == 1
-          ),
-          (l) => l.weight
-        )
-      })
-      console.log(node_list)
-      console.log(all_all_list)
-      let scale_set = scale_set_create(topo_combination, all_all_list)
-      scale_set.linear_node_size = d3
-        .scaleLinear()
-        .domain(d3.extent(node_list, (d) => d.weight))
-        .range([100, 1600])
-      let main_svg = d3.select("#corpus").append("svg")
-      let width = 1000
-      let height = 1000
-      main_svg
-        .attr("width", width)
-        .attr("height", height)
-        .attr("width", width)
-        .attr("height", height)
-
-      let simulation = (d3.simulation = d3
-        .forceSimulation()
-        .nodes(node_list)
-        .force(
-          "link",
-          d3.forceLink(all_all_list).id((d) => d.id)
-        )
-        .force("charge", d3.forceManyBody().strength(-800))
-        .force("x", d3.forceX())
-        .force("y", d3.forceY())).force(
-        "center",
-        d3.forceCenter(width / 2, height / 2)
-      )
-
-      const link = main_svg
-        .append("g")
-        .attr("class", "links")
-        .selectAll("path")
-        .data(
-          all_all_list,
-          (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
-        )
-        .join("path")
-      /*       .attr(
-        "class",
-        (d) =>
-          `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
-      )
-      .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
-      .attr("stroke", link_color)
-      .attr("stroke-width", (d) => Math.sqrt(d.weight))
-      .attr("fill", "none")
-      .attr("isCalled", "false")
-      .attr("d", (d) => linkArc(d))
-      .attr("marker-end", (d) => {
-        if (d.is_directional == 1) {
-          return `url(${new URL(
-            `#Topo_arrow_${d.source.id}_${d.target.id}`,
-            location
-          )})`
-        } else {
-        }
-      }) */
-      init_edge("#corpus", link, scale_set)
-      let marker = main_svg
-        .append("g")
-        .attr("class", "markers")
-        .selectAll("defs")
-        .data(all_all_list)
-        .join("defs")
-      init_marker("#corpus", marker, scale_set)
-
-      const node = main_svg
-        .append("g")
-        .attr("class", "nodes")
-        .selectAll(".node")
-        .data(node_list, (d) => d.id)
-        .join("path")
-
-      init_node("#corpus", node, scale_set, simulation)
-      simulation.on("tick", () => {
-        link.attr("d", link_path)
-
-        node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
-      })
-
-      function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart()
-        event.subject.fx = event.subject.x
-        event.subject.fy = event.subject.y
-      }
-
-      // Update the subject (dragged node) position during drag.
-      function dragged(event) {
-        event.subject.fx = event.x
-        event.subject.fy = event.y
-      }
-
-      // Restore the target alpha so the simulation cools after dragging ends.
-      // Unfix the subject position now that it’s no longer being dragged.
-      function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0)
-        event.subject.fx = null
-        event.subject.fy = null
-      }
-      node
-        .on("click", (event, d) => {
-          if (req_topo.indexOf(d.id) != -1) {
-            filter_list.push({
-              type: "requirement",
-              key_word_list: [d.id],
-              is_exclude: false,
-              is_pure: false
-            })
-          } else if (
-            data_topo.dataset.indexOf(d.id) != -1 ||
-            data_topo.category.indexOf(d.id) != -1 ||
-            data_topo.direction.indexOf(d.id) != -1
-          ) {
-            filter_list.push({
-              type: "data",
-              key_word_list: [d.id],
-              is_exclude: false,
-              is_pure: false
-            })
-          } else {
-            filter_list.push({
-              type: "solution",
-              key_word_list: [d.id],
-              is_exclude: false,
-              is_pure: false,
-              position: d3.filter(filter_list, (d) => d.type == "solution")
-                .length
-            })
-          }
-          upd_force(
-            data_original,
-            req_topo,
-            data_topo,
-            sol_topo,
-            filter_list,
-            simulation
-          )
-        })
-        .on("mouseover", (event, d) => {
-          add_tool_tip("#corpus", d, event.clientX, event.clientY, "node")
-        })
-        .on("mouseout", (event, d) => {
-          d3.select("#corpus").select("#custom_tooltip").remove()
-        })
-        .call(
-          d3
-            .drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended)
-        )
-      // Add a drag behavior.
-    }
-
-    let upd_force = (
-      data_original,
-      req_topo,
-      data_topo,
-      sol_topo,
-      filter_list = [],
-      simulation
-    ) => {
-      let topo_combination = topo_building(req_topo, data_topo, sol_topo)
-      let all_all_list = upd_all_all_list(
-        data_original,
-        topo_combination,
-        filter_list,
-        true,
-        true
-      )
-      //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
-      //gaoshh1
-      let node_list = topo_combination.all_list.map((d) => ({ ...d }))
-      node_list.forEach((d, index) => {
-        node_list[index].weight = d3.sum(
-          d3.filter(
-            all_all_list,
-            (l) =>
-              (l.source == d.id || l.target == d.id) && l.is_directional == 1
-          ),
-          (l) => l.weight
-        )
-      })
-      let scale_set = scale_set_create(topo_combination, all_all_list)
-      scale_set.linear_node_size = d3
-        .scaleLinear()
-        .domain(d3.extent(node_list, (d) => d.weight))
-        .range([100, 800])
-      let main_svg = d3.select("#corpus").select("svg")
-      simulation.nodes(node_list).force(
-        "link",
-        d3.forceLink(all_all_list).id((d) => d.id)
-      )
-      const link = main_svg.selectAll(".links")
-      link
-        .selectAll("path")
-        .data(
-          all_all_list,
-          (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
-        )
-        .join("path")
-      /*       .attr(
-        "class",
-        (d) =>
-          `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
-      )
-      .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
-      .attr("stroke", link_color)
-      .attr("stroke-width", (d) => Math.sqrt(d.weight))
-      .attr("fill", "none")
-      .attr("isCalled", "false")
-      .attr("d", (d) => linkArc(d))
-      .attr("marker-end", (d) => {
-        if (d.is_directional == 1) {
-          return `url(${new URL(
-            `#Topo_arrow_${d.source.id}_${d.target.id}`,
-            location
-          )})`
-        } else {
-        }
-      }) */
-      //
-      let marker = main_svg.select(".marker").selectAll("defs")
-      //.data(all_all_list)
-      //.join("defs")
-      let marker_set = main_svg.select(".markers")
-      //init_marker("#corpus", marker, scale_set)
-      const node = main_svg.select(".nodes")
-      node
-        .selectAll(".node")
-        .data(node_list, (d) => d.id)
-        .join("path")
-      init_edge("#corpus", link.selectAll("path"), scale_set)
-      init_node("#corpus", node.selectAll(".node"), scale_set, simulation)
-      // Set the position attributes of links and nodes each time the simulation ticks.
-      link.selectAll("path").attr("d", link_path)
-
-      // Reheat the simulation when drag starts, and fix the subject position.
-      function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart()
-        event.subject.fx = event.subject.x
-        event.subject.fy = event.subject.y
-      }
-
-      // Update the subject (dragged node) position during drag.
-      function dragged(event) {
-        event.subject.fx = event.x
-        event.subject.fy = event.y
-      }
-
-      // Restore the target alpha so the simulation cools after dragging ends.
-      // Unfix the subject position now that it’s no longer being dragged.
-      function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0)
-        event.subject.fx = null
-        event.subject.fy = null
-      }
-      //
-      node
-        .selectAll(".node")
-        .on("click", (event, d) => {
-          if (req_topo.indexOf(d.id) != -1) {
-            filter_list.push({
-              type: "requirement",
-              key_word_list: [d.id],
-              is_exclude: false,
-              is_pure: false
-            })
-          } else if (
-            data_topo.dataset.indexOf(d.id) != -1 ||
-            data_topo.category.indexOf(d.id) != -1 ||
-            data_topo.direction.indexOf(d.id) != -1
-          ) {
-            filter_list.push({
-              type: "data",
-              key_word_list: [d.id],
-              is_exclude: false,
-              is_pure: false
-            })
-          } else {
-            filter_list.push({
-              type: "solution",
-              key_word_list: [d.id],
-              is_exclude: false,
-              is_pure: false,
-              position: d3.filter(filter_list, (d) => d.type == "solution")
-                .length
-            })
-          }
-          upd_force(
-            data_original,
-            req_topo,
-            data_topo,
-            sol_topo,
-            filter_list,
-            simulation
-          )
-        })
-        .on("mouseover", (event, d) => {
-          add_tool_tip("#corpus", d, event.clientX, event.clientY, "node")
-        })
-        .on("mouseout", (event, d) => {
-          d3.select("#corpus").select("#custom_tooltip").remove()
-        })
-      upd_link_and_node_and_marker(
-        filter_list,
-        link,
-        node,
-        marker_set,
-        scale_set
-      )
-      d3.select("#withdraw_button").on("click", () => {
-        filter_list_w = filter_list.slice(0, -1)
-        upd_force(
-          data_original,
-          req_topo,
-          data_topo,
-          sol_topo,
-          filter_list_w,
-          simulation
-        )
-      })
-      node
-        .selectAll(".node")
-        .call(
-          d3
-            .drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended)
-        )
-      // Add a drag behavior.
-    }
-
-    draw_force(data_original, req_topo, data_topo, sol_topo, [])
-    d3.select("#corpus")
-      .select("svg")
-      .append("g")
-      .append("rect")
-      .attr("id", "withdraw_button")
-      .attr("x", 0)
-      .attr("y", 0)
-      .attr("width", 10)
-      .attr("height", 10)
-      .attr("fill", "red")
-  })
 }
 
 dict2list = (dict) => {
