@@ -1179,99 +1179,99 @@ function tabPattern() {
   document.getElementsByClassName("nav-link")[3].classList.remove("active")
   document.getElementsByClassName("nav-link")[2].classList.add("active")
 
-  Promise.all([
-    d3.json("./static/data.json"),
-    d3.json("./static/requirement_topo.json"),
-    d3.json("./static/data_topo.json"),
-    d3.json("./static/sol_topo.json")
-  ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
-    let topo_combination = topo_building(req_topo, data_topo, sol_topo)
+  // Promise.all([
+  //   d3.json("./static/data.json"),
+  //   d3.json("./static/requirement_topo.json"),
+  //   d3.json("./static/data_topo.json"),
+  //   d3.json("./static/sol_topo.json")
+  // ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
+  //   let topo_combination = topo_building(req_topo, data_topo, sol_topo)
 
-    let all_all_list = upd_all_all_list(
-      data_original,
-      topo_combination,
-      [],
-      false,
-      true
-    )
-    //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
-    let node_list = topo_combination.all_list.map((d) => ({ ...d }))
+  //   let all_all_list = upd_all_all_list(
+  //     data_original,
+  //     topo_combination,
+  //     [],
+  //     false,
+  //     true
+  //   )
+  //   //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
+  //   let node_list = topo_combination.all_list.map((d) => ({ ...d }))
 
-    all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 1)
-    all_all_list = link_complement(all_all_list, topo_combination.all_list)
+  //   all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 1)
+  //   all_all_list = link_complement(all_all_list, topo_combination.all_list)
 
-    node_list_reorder = d3.map(node_list, (d, index) => {
-      return { name: d.id, weight: +0, index: +index }
-    })
-    all_all_list_reorder = d3.map(all_all_list, (original, index) => {
-      return {
-        source: d3.filter(
-          node_list_reorder,
-          (d) => d.name == original.source
-        )[0], //{ name: d.source, weight: +0 },
-        target: d3.filter(
-          node_list_reorder,
-          (d) => d.name == original.target
-        )[0],
-        value: original.weight,
-        index: +index,
-        distance: +0
-      }
-    })
+  //   node_list_reorder = d3.map(node_list, (d, index) => {
+  //     return { name: d.id, weight: +0, index: +index }
+  //   })
+  //   all_all_list_reorder = d3.map(all_all_list, (original, index) => {
+  //     return {
+  //       source: d3.filter(
+  //         node_list_reorder,
+  //         (d) => d.name == original.source
+  //       )[0], //{ name: d.source, weight: +0 },
+  //       target: d3.filter(
+  //         node_list_reorder,
+  //         (d) => d.name == original.target
+  //       )[0],
+  //       value: original.weight,
+  //       index: +index,
+  //       distance: +0
+  //     }
+  //   })
 
-    var graph = reorder
-      .graph()
-      .nodes(node_list_reorder)
-      .links(all_all_list_reorder)
-      .init()
-    let dist_adjacency
-    const leafOrder = reorder
-      .optimal_leaf_order()
-      .distance(reorder.distance["manhattan"])
-    function computeLeaforder() {
-      const adjacency = reorder.graph2mat(graph)
-      return leafOrder(adjacency)
-    }
-    function computeRCM() {
-      return reorder.reverse_cuthill_mckee_order(graph)
-    }
-    let new_order = computeLeaforder()
-    new_order = Array.from(Array(topo_combination.all_list.length - 1).keys())
-    let scale_set = scale_set_create(topo_combination, all_all_list)
-    let scale_opacity = d3.scaleLog(
-      d3.extent(all_all_list, (d) => d.weight + 1),
-      [0, 1]
-    )
-    let main_svg = d3.select("#pattern").append("svg")
-    let width = 1000
-    let height = 1000
-    main_svg
-      .attr("width", width)
-      .attr("height", height)
-      .attr("width", width)
-      .attr("height", height)
-    main_svg
-      .append("g")
-      .attr("class", "matrix_1")
-      .selectAll("rect")
-      .data(all_all_list)
-      .join("rect")
-      .attr("x", (d) => new_order[scale_set.all_ordinal(d.target)] * 10 + 1)
-      .attr("y", (d) => new_order[scale_set.all_ordinal(d.source)] * 10 + 1)
-      .attr("id", (d) => `rect_${d.source}_${d.target}`)
-      .attr("width", 8)
-      .attr("height", 8)
-      .attr("fill", "red")
-      .attr("opacity", (d) => scale_opacity(+d.weight + 1))
-      .attr("stroke", "grey")
-      .on("mouseover", (event, d) => {
-        d3.select(`#rect_${d.source}_${d.target}`).attr("fill", "blue")
-        add_tool_tip("#pattern", d, event.clientX, event.clientY, "link")
-      })
-      .on("mouseout", (event, d) => {
-        d3.select("#pattern").select("#custom_tooltip").remove()
-      })
-  })
+  //   var graph = reorder
+  //     .graph()
+  //     .nodes(node_list_reorder)
+  //     .links(all_all_list_reorder)
+  //     .init()
+  //   let dist_adjacency
+  //   const leafOrder = reorder
+  //     .optimal_leaf_order()
+  //     .distance(reorder.distance["manhattan"])
+  //   function computeLeaforder() {
+  //     const adjacency = reorder.graph2mat(graph)
+  //     return leafOrder(adjacency)
+  //   }
+  //   function computeRCM() {
+  //     return reorder.reverse_cuthill_mckee_order(graph)
+  //   }
+  //   let new_order = computeLeaforder()
+  //   new_order = Array.from(Array(topo_combination.all_list.length - 1).keys())
+  //   let scale_set = scale_set_create(topo_combination, all_all_list)
+  //   let scale_opacity = d3.scaleLog(
+  //     d3.extent(all_all_list, (d) => d.weight + 1),
+  //     [0, 1]
+  //   )
+  //   let main_svg = d3.select("#pattern").append("svg")
+  //   let width = 1000
+  //   let height = 1000
+  //   main_svg
+  //     .attr("width", width)
+  //     .attr("height", height)
+  //     .attr("width", width)
+  //     .attr("height", height)
+  //   main_svg
+  //     .append("g")
+  //     .attr("class", "matrix_1")
+  //     .selectAll("rect")
+  //     .data(all_all_list)
+  //     .join("rect")
+  //     .attr("x", (d) => new_order[scale_set.all_ordinal(d.target)] * 10 + 1)
+  //     .attr("y", (d) => new_order[scale_set.all_ordinal(d.source)] * 10 + 1)
+  //     .attr("id", (d) => `rect_${d.source}_${d.target}`)
+  //     .attr("width", 8)
+  //     .attr("height", 8)
+  //     .attr("fill", "red")
+  //     .attr("opacity", (d) => scale_opacity(+d.weight + 1))
+  //     .attr("stroke", "grey")
+  //     .on("mouseover", (event, d) => {
+  //       d3.select(`#rect_${d.source}_${d.target}`).attr("fill", "blue")
+  //       add_tool_tip("#pattern", d, event.clientX, event.clientY, "link")
+  //     })
+  //     .on("mouseout", (event, d) => {
+  //       d3.select("#pattern").select("#custom_tooltip").remove()
+  //     })
+  // })
 }
 
 function tabCorpus() {
