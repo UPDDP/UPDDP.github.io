@@ -162,7 +162,8 @@ add_tool_tip = (id, d, x, y, type) => {
     .style("padding", "5px")
     .html(tooltip_html(id, d, type))
     .style("left", x + 70 + "px")
-    .style("top", y + 300 + "px")
+    .style("top", y + 400 + "px")
+    
 }
 
 tooltip_html = (id, d, type) => {
@@ -173,10 +174,18 @@ tooltip_html = (id, d, type) => {
     case "link":
       switch (id) {
         case "#explore":
-          return `This link is from ${d.source.id} to ${d.target.id} <br/> Weight: ${d.weight}`
+       
+          if("pattern_specify" in d){
+            return `This link is from ${d.source.id} to ${d.target.id} <br/> Weight: ${d.weight}<br/> Pattern: ${d.pattern_specify}`
+          }
+else{            return `This link is from ${d.source.id} to ${d.target.id} <br/> Weight: ${d.weight}`
+}
         case "#pattern":
-          return `This link is from ${d.source} to ${d.target} <br/> Weight: ${d.weight}`
-      }
+          if("pattern_specify" in d){
+            return `This link is from ${d.source} to ${d.target} <br/> Weight: ${d.weight}<br/> Pattern: ${d.pattern_specify}`
+          }
+else{          return `This link is from ${d.source} to ${d.target} <br/> Weight: ${d.weight}`
+} }
 
       break
     default:
@@ -450,10 +459,6 @@ data_process = (data_original, filter_list = []) => {
       )
     }
   })
-  console.log("data_after_process")
-  console.log(data)
-  console.log("filter_list")
-  console.log(filter_list)
   return data
 }
 
@@ -819,8 +824,6 @@ function tabExplore() {
           (l) => l.weight
         )
       })
-      console.log(node_list)
-      console.log(all_all_list)
       let scale_set = scale_set_create(topo_combination, all_all_list)
       scale_set.linear_node_size = d3
         .scaleLinear()
@@ -1560,8 +1563,6 @@ data_filter_sol = (
     key_word_list = [key_word_list]
   }
   key_word_list = Array.from(key_word_list)
-  //console.log("before")
-  //console.log(data)
   data = d3.filter(data, (d) => {
     return is_exclude
       ? sol_iter_filter_exclude(d, key_word_list, position)
@@ -1573,12 +1574,9 @@ data_filter_sol = (
       ? sol_iter_filter_exclude(d, key_word_list, position)
       : sol_iter_filter_not_exclude(d, key_word_list, position)
     if (flag) {
-      //console.log("d__")
       data_new.push(d)
     }
   })
-  // console.log("data")
-  //console.log(data)
   return data_new
 }
 
@@ -1602,10 +1600,8 @@ sol_iter_filter_exclude = (d, key_word_list, position) => {
 }
 
 sol_iter_filter_not_exclude = (d, key_word_list, position) => {
-  //console.log("position", position)
   let flag = false
 
-  //console.log(d.solution)
   if (position == -1) {
     let sol_code_set = new Set()
     for (let i = 0; i < d.solution.length; i++) {
@@ -1633,9 +1629,7 @@ sol_iter_filter_not_exclude = (d, key_word_list, position) => {
           break
         }
         if (d.solution[node_num].solution_category == "data_manipulation") {
-          //console.log(d.solution[node_num].componenet_code)
           d.solution[node_num].componenet_code.forEach((k) => {
-            //console.log(k, key_word_list[i], k == key_word_list[i])
             if (key_word_list.indexOf(k) != -1) {
               flag = true
               return true
@@ -1654,7 +1648,6 @@ sol_iter_filter_not_exclude = (d, key_word_list, position) => {
         }
       }
     }
-    //console.log("g")
     return flag
   }
 }
