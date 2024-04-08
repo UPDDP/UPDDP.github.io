@@ -162,20 +162,20 @@ add_tool_tip = (id, d, x, y, type) => {
     .style("padding", "5px")
     .html(tooltip_html(id, d, type))
     .style("left", x + 70 + "px")
-    .style("top", y + "px")
+    .style("top", y + 300 + "px")
 }
 
 tooltip_html = (id, d, type) => {
   switch (type) {
     case "node":
-      return `This type is: ${d.id} <br/> It's weight is ${d.weight}`
+      return `Type: ${d.id} <br/> Weight: ${d.weight}`
       break
     case "link":
       switch (id) {
         case "#explore":
-          return `This link is from ${d.source.id} to ${d.target.id} <br/> It's weight is ${d.weight}`
+          return `This link is from ${d.source.id} to ${d.target.id} <br/> Weight: ${d.weight}`
         case "#pattern":
-          return `This link is from ${d.source} to ${d.target} <br/> It's weight is ${d.weight}`
+          return `This link is from ${d.source} to ${d.target} <br/> Weight: ${d.weight}`
       }
 
       break
@@ -834,6 +834,11 @@ function tabExplore() {
         .attr("height", height)
         .attr("width", width)
         .attr("height", height)
+        .style("border", "solid")
+        .style("border-width", "2px")
+        .style("border-radius", "5px")
+        .style("border-color", "grey")
+        .style("margin-left", "10%")
 
       let simulation = (d3.simulation = d3
         .forceSimulation()
@@ -1057,7 +1062,10 @@ function tabExplore() {
       init_node("#explore", node.selectAll(".node"), scale_set, simulation)
       // Set the position attributes of links and nodes each time the simulation ticks.
       link.selectAll("path").attr("d", link_path)
-
+      simulation.on("tick", () => {
+        link.selectAll("path").attr("d", link_path)
+        node   .selectAll(".node").attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
+      })
       // Reheat the simulation when drag starts, and fix the subject position.
       function dragstarted(event) {
         if (!event.active) simulation.alphaTarget(0.3).restart()
@@ -1132,17 +1140,7 @@ function tabExplore() {
         marker_set,
         scale_set
       )
-      d3.select("#withdraw_button").on("click", () => {
-        filter_list_w = filter_list.slice(0, -1)
-        upd_force(
-          data_original,
-          req_topo,
-          data_topo,
-          sol_topo,
-          filter_list_w,
-          simulation
-        )
-      })
+
       node
         .selectAll(".node")
         .call(
@@ -1156,16 +1154,7 @@ function tabExplore() {
     }
 
     draw_force(data_original, req_topo, data_topo, sol_topo, [])
-    d3.select("#explore")
-      .select("svg")
-      .append("g")
-      .append("rect")
-      .attr("id", "withdraw_button")
-      .attr("x", 0)
-      .attr("y", 0)
-      .attr("width", 10)
-      .attr("height", 10)
-      .attr("fill", "red")
+
   })
 }
 function tabPattern() {
@@ -1381,7 +1370,7 @@ scale_set_create = (topo_combination, all_all_list) => {
     .range(Array.from(Array(topo_combination.all_list.length - 1).keys()))
   scale_set["all_linear_range"] = d3
     .scaleLog()
-    .domain(d3.extent(all_all_list, (d) => d.weight + 1))
+    .domain([0,d3.max(all_all_list, (d) => d.weight + 1)])
     .range([0, 1])
   scale_set["color_node_type"] = d3
     .scaleOrdinal()
@@ -1391,10 +1380,10 @@ scale_set_create = (topo_combination, all_all_list) => {
   scale_set["multlple_link_color"] = d3
     .scaleOrdinal()
     .domain(topo_combination["vis_axial_list"])
-    .range(["#1f77b4", "#ff7f0e", "#2ca02c", "#2ca02c", "#2ca02c"])
+    .range(["#2ca02c", "#2ca02c", "#2ca02c", "#2ca02c", "#2ca02c"])
   scale_set["weight"] = d3
     .scaleLinear()
-    .domain(d3.extent(all_all_list, (d) => d.weight))
+    .domain([0,d3.max(all_all_list, (d) => d.weight)])
     .range([1, 10])
 
   return scale_set
