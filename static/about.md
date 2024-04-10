@@ -11,3 +11,5 @@ The **Explorer** page presents an interactive force-directed solution graph deri
 The **Typologies** page presents our refined typologies for requirement, data, and solution in visual analytics. We introduce a new Functional part of requirement typology, a new Data Manipulation part of solution typology, and incorporate data typologies of Munzer and Bigelow et al.
 
 The **Research Corpus** page presents the corpus containing 220 visual analytics paper published on IEEE TVCG and IEEE VAST. We detached these publications into units of requirements, data, and solutions. Then we coded these units using the aforementioned typologies and organized them into solution paths.
+
+<img src="static\illustration.png" alt="illustration" style="margin-left:10%; width: 900px;" />
