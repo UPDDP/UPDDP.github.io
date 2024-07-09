@@ -147,41 +147,132 @@ let upd_filter_list = (filter_list) => {
     })
 }
 
+function updateSelected() {
+  let selectedFilters = document.getElementById("selectedReq")
+
+  let filtersContainer = document.getElementById("requirementContainer")
+  let selects = filtersContainer.querySelectorAll("select")
+
+  selects.forEach((select) => {
+    Array.from(select.selectedOptions).forEach((option) => {
+      if (
+        filter_list.filter((d) => d.type == "requirement").length ==
+        REQUIREMENTOPTIONSLIST.length
+      ) {
+        filter_list = filter_list.filter((d) => d.type != "requirement")
+      }
+      if (
+        filter_list.filter((d) => d.key_word_list[0] == option.value).length ==
+        0
+      ) {
+        filter_list.push({
+          type: "requirement",
+          key_word_list: [option.value],
+          is_exclude: false,
+          is_pure: false
+        })
+      }
+    })
+  })
+
+  selectedFilters = document.getElementById("selectedData")
+  selectedFilters.innerHTML = ""
+  filtersContainer = document.getElementById("dataContainer")
+  selects = filtersContainer.querySelectorAll("select")
+
+  selects.forEach((select) => {
+    Array.from(select.selectedOptions).forEach((option) => {
+      if (
+        filter_list.filter((d) => d.type == "data").length ==
+        DATAOPTIONSLIST.length
+      ) {
+        filter_list = filter_list.filter((d) => d.type != "data")
+      }
+      if (
+        filter_list.filter((d) => d.key_word_list[0] == option.value).length ==
+        0
+      ) {
+        filter_list.push({
+          type: "data",
+          key_word_list: [option.value],
+          is_exclude: false,
+          is_pure: false
+        })
+      }
+    })
+  })
+
+  selectedFilters = document.getElementById("selectedSol")
+  selectedFilters.innerHTML = ""
+  filtersContainer = document.getElementById("solContainer")
+  selects = filtersContainer.querySelectorAll("select")
+
+  selects.forEach((select) => {
+    Array.from(select.selectedOptions).forEach((option) => {
+      if (
+        filter_list.filter((d) => d.type == "solution").length ==
+        SOLOPTIONSLIST.length
+      ) {
+        filter_list = filter_list.filter((d) => d.type != "solution")
+      }
+      if (
+        filter_list.filter((d) => d.key_word_list[0] == option.value).length ==
+        0
+      ) {
+        filter_list.push({
+          type: "solution",
+          key_word_list: [option.value],
+          is_exclude: false,
+          is_pure: false,
+          position: d3.filter(filter_list, (d) => d.type == "solution").length
+        })
+      }
+    })
+  })
+  upd_filter_list(filter_list)
+  /*     filter_list
+      .filter((d) => d.type == "requirement")
+      .forEach((iter) => {
+        const li = document.createElement("li")
+        li.textContent = iter.key_word_list[0]
+        selectedFilters.appendChild(li)
+      }) */
+  draw_explorer_svg()
+  document.getElementById("selector_req").selectedIndex = -1
+  document.getElementById("selector_data").selectedIndex = -1
+  document.getElementById("selector_sol").selectedIndex = -1
+}
+
 // Req Btn
 document.addEventListener("DOMContentLoaded", function () {
-  const addFilterBtn = document.getElementById("addRequirementBtn")
   const filtersContainer = document.getElementById("requirementContainer")
   const selectedFilters = document.getElementById("selectedReq")
 
-  addFilterBtn.addEventListener("click", function () {
-    addFilterReq()
+  const filterDiv = document.createElement("div")
+  filterDiv.className = "tooltip-container mb-2 selector"
+  const tooltipContent = document.createElement("div")
+  tooltipContent.className = "tooltip-content"
+
+  const select = document.createElement("select")
+  select.className = "form-control  mb-2"
+  select.id = "selector_req"
+
+  select.innerHTML = REQUIREMENTOPTIONSLIST.map(
+    (option) => `<option value="${option}">${option}</option>`
+  ).join("")
+  tooltipContent.appendChild(select)
+  select.selectedIndex = -1
+
+  const confirmBtn = document.getElementById("confirmBtn")
+
+  confirmBtn.addEventListener("click", function () {
+    updateSelected()
+    //    updateSelectedFiltersReq(select)
   })
-
-  function addFilterReq() {
-    const filterDiv = document.createElement("div")
-    filterDiv.className = "tooltip-container mb-2 selector"
-    const tooltipContent = document.createElement("div")
-    tooltipContent.className = "tooltip-content"
-
-    const select = document.createElement("select")
-    select.className = "form-control  mb-2"
-    select.innerHTML = REQUIREMENTOPTIONSLIST.map(
-      (option) => `<option value="${option}">${option}</option>`
-    ).join("")
-    tooltipContent.appendChild(select)
-
-    const confirmBtn = document.createElement("button")
-    confirmBtn.className = "btn btn-primary"
-    confirmBtn.textContent = "Confirm"
-    confirmBtn.addEventListener("click", function () {
-      updateSelectedFiltersReq(select)
-      filterDiv.remove()
-    })
-    if ($("#requirementContainer").children().length == 0) {
-      tooltipContent.appendChild(confirmBtn)
-      filterDiv.appendChild(tooltipContent)
-      filtersContainer.appendChild(filterDiv)
-    }
+  if ($("#requirementContainer").children().length == 0) {
+    tooltipContent.appendChild(confirmBtn)
+    filterDiv.appendChild(tooltipContent)
+    filtersContainer.appendChild(filterDiv)
   }
 
   function updateSelectedFiltersReq(select) {
@@ -218,45 +309,38 @@ document.addEventListener("DOMContentLoaded", function () {
         li.textContent = iter.key_word_list[0]
         selectedFilters.appendChild(li)
       }) */
-    draw_explorer_svg(filter_list)
+    draw_explorer_svg()
   }
 })
 
 // Data Btn
 document.addEventListener("DOMContentLoaded", function () {
-  const addFilterBtn = document.getElementById("addDataBtn")
   const filtersContainer = document.getElementById("dataContainer")
   const selectedFilters = document.getElementById("selectedData")
 
-  addFilterBtn.addEventListener("click", function () {
-    addFilterData()
+  const filterDiv = document.createElement("div")
+  filterDiv.className = "tooltip-container mb-2 selector"
+  const tooltipContent = document.createElement("div")
+  tooltipContent.className = "tooltip-content"
+
+  const select = document.createElement("select")
+  select.className = "form-control  mb-2"
+  select.id = "selector_data"
+  select.innerHTML = DATAOPTIONSLIST.map(
+    (option) => `<option value="${option}">${option}</option>`
+  ).join("")
+  tooltipContent.appendChild(select)
+  select.selectedIndex = -1
+  const confirmBtn = document.getElementById("confirmBtn")
+
+  confirmBtn.addEventListener("click", function () {
+    updateSelected()
+    // updateSelectedFiltersData(select)
   })
-
-  function addFilterData() {
-    const filterDiv = document.createElement("div")
-    filterDiv.className = "tooltip-container mb-2 selector"
-    const tooltipContent = document.createElement("div")
-    tooltipContent.className = "tooltip-content"
-
-    const select = document.createElement("select")
-    select.className = "form-control  mb-2"
-    select.innerHTML = DATAOPTIONSLIST.map(
-      (option) => `<option value="${option}">${option}</option>`
-    ).join("")
-    tooltipContent.appendChild(select)
-
-    const confirmBtn = document.createElement("button")
-    confirmBtn.className = "btn btn-primary"
-    confirmBtn.textContent = "Confirm"
-    confirmBtn.addEventListener("click", function () {
-      updateSelectedFiltersData(select)
-      filterDiv.remove()
-    })
-    if ($("#dataContainer").children().length == 0) {
-      tooltipContent.appendChild(confirmBtn)
-      filterDiv.appendChild(tooltipContent)
-      filtersContainer.appendChild(filterDiv)
-    }
+  if ($("#dataContainer").children().length == 0) {
+    tooltipContent.appendChild(confirmBtn)
+    filterDiv.appendChild(tooltipContent)
+    filtersContainer.appendChild(filterDiv)
   }
 
   function updateSelectedFiltersData(select) {
@@ -293,46 +377,39 @@ document.addEventListener("DOMContentLoaded", function () {
         li.textContent = iter.key_word_list[0]
         selectedFilters.appendChild(li)
       }) */
-    draw_explorer_svg(filter_list)
+    draw_explorer_svg()
   }
 })
 
 // Sol Btn
 document.addEventListener("DOMContentLoaded", function () {
-  const addFilterBtn = document.getElementById("addSolBtn")
   const filtersContainer = document.getElementById("solContainer")
   const selectedFilters = document.getElementById("selectedSol")
 
-  addFilterBtn.addEventListener("click", function () {
-    addFilterSol()
+  const filterDiv = document.createElement("div")
+  filterDiv.className = "tooltip-container mb-2 selector"
+  const tooltipContent = document.createElement("div")
+  tooltipContent.className = "tooltip-content"
+
+  const select = document.createElement("select")
+  select.className = "form-control  mb-2"
+  select.id = "selector_sol"
+
+  select.innerHTML = SOLOPTIONSLIST.map(
+    (option) => `<option value="${option}">${option}</option>`
+  ).join("")
+  tooltipContent.appendChild(select)
+  select.selectedIndex = -1
+  const confirmBtn = document.getElementById("confirmBtn")
+
+  confirmBtn.addEventListener("click", function () {
+    updateSelected()
+    //updateSelectedFiltersSol(select)
   })
-
-  function addFilterSol() {
-    const filterDiv = document.createElement("div")
-    filterDiv.className = "tooltip-container mb-2 selector"
-    const tooltipContent = document.createElement("div")
-    tooltipContent.className = "tooltip-content"
-
-    const select = document.createElement("select")
-    select.className = "form-control  mb-2"
-    select.innerHTML = SOLOPTIONSLIST.map(
-      (option) => `<option value="${option}">${option}</option>`
-    ).join("")
-    tooltipContent.appendChild(select)
-
-    const confirmBtn = document.createElement("button")
-    confirmBtn.className = "btn btn-primary"
-    confirmBtn.textContent = "Confirm"
-    confirmBtn.addEventListener("click", function () {
-      updateSelectedFiltersSol(select)
-      filterDiv.remove()
-    })
-    if ($("#solContainer").children().length == 0) {
-      tooltipContent.appendChild(confirmBtn)
-
-      filterDiv.appendChild(tooltipContent)
-      filtersContainer.appendChild(filterDiv)
-    }
+  if ($("#solContainer").children().length == 0) {
+    tooltipContent.appendChild(confirmBtn)
+    filterDiv.appendChild(tooltipContent)
+    filtersContainer.appendChild(filterDiv)
   }
 
   function updateSelectedFiltersSol(select) {
@@ -369,7 +446,7 @@ document.addEventListener("DOMContentLoaded", function () {
         li.textContent = iter.key_word_list[0]
         selectedFilters.appendChild(li)
       }) */
-    draw_explorer_svg(filter_list)
+    draw_explorer_svg()
   }
 })
 
@@ -386,7 +463,7 @@ document.addEventListener("DOMContentLoaded", function () {
     $("#selectedReq").empty()
     $("#selectedData").empty()
     $("#selectedSol").empty()
-    draw_explorer_svg(filter_list)
+    draw_explorer_svg()
   }
 })
 
@@ -575,7 +652,7 @@ upd_link_and_node_and_marker = (
     d.key_word_list.forEach((k) => {
       //node_set.select(`.node_${k}`).attr("d", (d) => path_form(d.group, 400))
       // gaoshh1
-      node_set.select(`.node_${k}`).attr("stroke", "red")
+      node_set.select(`#node_${k}`).attr("stroke", "red")
 
       if (d.type == "solution") {
         if (source_node == "") {
@@ -949,6 +1026,7 @@ upd_all_all_list = (
   is_category = false
 ) => {
   let data = data_process(data_original, filter_dict)
+
   let topo = edge_building_matrix_paper(data, topo_combination)
   return link_building(topo, is_filter_zero_weight_link, is_category)
 }
@@ -1264,10 +1342,10 @@ function tabExplore() {
   document.getElementsByClassName("nav-link")[2].classList.remove("active")
   document.getElementsByClassName("nav-link")[3].classList.remove("active")
   document.getElementsByClassName("nav-link")[1].classList.add("active")
-  draw_explorer_svg([])
+  draw_explorer_svg()
 }
 
-draw_explorer_svg = (filter_list = []) => {
+draw_explorer_svg = () => {
   var width = $("#explorerContainerPar").width()
   console.log(width)
   $("#explorerContainerPar").css("height", width > 100 ? width : 720)
@@ -1335,14 +1413,16 @@ draw_explorer_svg = (filter_list = []) => {
           "link",
           d3.forceLink(all_all_list).id((d) => d.id)
         )
-        .force("charge", d3.forceManyBody().strength(-800))
+        .force("charge", d3.forceManyBody().strength(-400))
         .force("x", d3.forceX())
-        .force("y", d3.forceY()))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .alpha(1)
+        .force("y", d3.forceY())).force(
+        "center",
+        d3.forceCenter(width / 2, height / 2)
+      )
+      /*        .alpha(1)
         .alphaDecay(0.05)
         .alphaMin(0.01)
-
+ */
       const link = main_svg
         .append("g")
         .attr("class", "links")
@@ -1352,26 +1432,7 @@ draw_explorer_svg = (filter_list = []) => {
           (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
         )
         .join("path")
-      /*       .attr(
-        "class",
-        (d) =>
-          `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
-      )
-      .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
-      .attr("stroke", link_color)
-      .attr("stroke-width", (d) => Math.sqrt(d.weight))
-      .attr("fill", "none")
-      .attr("isCalled", "false")
-      .attr("d", (d) => linkArc(d))
-      .attr("marker-end", (d) => {
-        if (d.is_directional == 1) {
-          return `url(${new URL(
-            `#Topo_arrow_${d.source.id}_${d.target.id}`,
-            location
-          )})`
-        } else {
-        }
-      }) */
+
       init_edge("#explore", link, scale_set)
       let marker = main_svg
         .append("g")
@@ -1390,11 +1451,11 @@ draw_explorer_svg = (filter_list = []) => {
 
       init_node("#explore", node, scale_set, simulation)
       simulation.on("tick", () => {
-        link.attr("d", link_path)
+        /*         link.attr("d", link_path)
         node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
         if (simulation.alpha() < 0.1) {
           simulation.stop()
-        }
+        } */
       })
 
       function dragstarted(event) {
@@ -1471,6 +1532,7 @@ draw_explorer_svg = (filter_list = []) => {
             .on("end", dragended)
         )
       // Add a drag behavior.
+      console.log(filter_list)
       if (filter_list.length != 0) {
         upd_force(
           data_original,
@@ -1494,7 +1556,6 @@ draw_explorer_svg = (filter_list = []) => {
           preLine.forEach((d) => {
             preLineObject[d.id] = d
           })
-
           link.attr("d", (d) => {
             d.source.x = +preNodeObject[`node_${d.source.id}`].X
             d.source.y = +preNodeObject[`node_${d.source.id}`].Y
@@ -1526,6 +1587,8 @@ draw_explorer_svg = (filter_list = []) => {
       filter_list = [],
       simulation
     ) => {
+      console.log(filter_list)
+      console.log("up")
       let topo_combination = topo_building(req_topo, data_topo, sol_topo)
       let all_all_list = upd_all_all_list(
         data_original,
@@ -1586,9 +1649,9 @@ draw_explorer_svg = (filter_list = []) => {
         node
           .selectAll(".node")
           .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
-        if (simulation.alpha() < 0.1) {
+        /*     if (simulation.alpha() < 0.1) {
           simulation.stop()
-        }
+        } */
       })
       // Reheat the simulation when drag starts, and fix the subject position.
       function dragstarted(event) {
@@ -1678,30 +1741,25 @@ draw_explorer_svg = (filter_list = []) => {
       filtered_data = data_process(data_original, filter_list)
 
       let gridCom = data_2_grid(filtered_data)
-
+      console.log(gridCom)
       $("#explorer_grid").jsGrid({
-        height: "100%",
+        height: "700",
         width: "100%",
         paging: true,
         pageSize: 15,
         pageButtonCount: 5,
-        pagerContainer: "#externalPager",
-        pagerFormat:
-          "current page: {pageIndex} &nbsp;&nbsp; {first} {prev} {pages} {next} {last} &nbsp;&nbsp; total pages: {pageCount}",
-        pagePrevText: "<",
-        pageNextText: ">",
-        pageFirstText: "<<",
-        pageLastText: ">>",
-        pageNavigatorNextText: "&#8230;",
-        pageNavigatorPrevText: "&#8230;",
-
+        gridview: true,
         sorting: true,
         paging: true,
 
         data: gridCom.grid_data,
 
-        fields: gridCom.grid_fields
+        fields: gridCom.grid_fields,
+        onRefreshed: function (args) {
+          console.log(args.grid)
+        }
       })
+      d3.selectAll(".jsgrid-cell").attr("height", "10px")
       upd_filter_list(filter_list)
     }
 
@@ -2116,4 +2174,3 @@ sol_iter_pure = (d, key_word_list, position) => {
   }
   return data_set
 }
-

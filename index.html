@@ -23,12 +23,13 @@
     <script src="js/reorder.js"></script>
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="js/d3.v7.js"></script>
-        <script type="text/javascript" src="js/jsgrid.min.js"></script>
+    <script type="text/javascript" src="js/jsgrid.min.js"></script>
     <script>
         function loadMarkdownFile() {
             fetch('static/about.md')
                 .then(response => response.text())
                 .then(markdown => {
+                    console.log(markdown)
                     const html = marked.parse(markdown);
                     document.getElementById('about').innerHTML = html;
                 });
@@ -71,28 +72,28 @@
         .fixed-height {
             height: 500px;
         }
-    
+
         .fixed-width {
             width: 500px;
         }
-    
+
         .full-height {
             height: 100%;
         }
-    
+
         .full-width {
             width: 50%;
         }
-    
+
         .semi-width {
             width: 100%;
         }
-    
+
         .divider {
             display: flex;
             align-items: center;
         }
-    
+
         .icon {
             margin-right: 10px;
             /* 调整图标与分割线之间的间距 */
@@ -105,22 +106,22 @@
             /* background-size: contain; */
             /* background-repeat: no-repeat; */
         }
-    
+
         hr {
             flex-grow: 1;
             border: 0;
             border-top: 1px solid #000;
             /* 分割线样式 */
         }
-    
+
         .no-padding {
             padding: 0%;
             border: 0;
             margin: 0
         }
-    
-        .jsgrid-cell {
-            word-wrap: break-word;
+        .jsgrid-cell, .jsgrid-header-cell {
+            height: 40px; /* 你可以根据需要调整高度 */
+            overflow:scroll;
         }
     </style>
 </head>
@@ -174,34 +175,37 @@
                 <div class="col-md-4" id="explorerFilterPar">
                     <div class="p-3 border bg-light full-height semi-width" style="overflow: scroll;">
                         <div class="container no-padding">
-    
+
                             <div class="divider">
                                 <img src="./static/favicon/reqIcon.png" class="icon" />
+                                <h4>Requirement</h4>
                                 <hr>
                             </div>
                             <ul id="selectedReq"></ul>
-                            <button id="addRequirementBtn" class="btn btn-primary mb-3">Add Requirement</button>
+                            <!--        <button id="addRequirementBtn" class="btn btn-primary mb-3">Add Requirement</button> -->
                             <div id="requirementContainer" class="mb-3"></div>
                             <div class="divider">
                                 <img src="./static/favicon/dataIcon.png" class="icon" />
+                                <h4>Data</h4>
                                 <hr>
                             </div>
                             <ul id="selectedData"></ul>
-                            <button id="addDataBtn" class="btn btn-primary mb-3">Add Data Constrain</button>
+
                             <div id="dataContainer" class="mb-3"></div>
-    
+
                             <div class="divider">
                                 <img src="./static/favicon/solIcon.png" class="icon" />
+                                <h4>Solution</h4>
                                 <hr>
                             </div>
                             <ul id="selectedSol"></ul>
-                            <button id="addSolBtn" class="btn btn-primary mb-3">Add Solution</button>
+
                             <div id="solContainer" class="mb-3"></div>
-    
+                            <button id="confirmBtn" class="btn btn-primary mb-3">Confirm</button>
                             <button id="resetBtn" class="btn btn-primary mb-3">Reset</button>
                         </div>
                     </div>
-    
+
                 </div>
                 <div class="col-md-8" id="explorerContainerPar">
                     <div class="p-3 border  bg-light full-height semi-width " id="explorerContainer"></div>
@@ -210,13 +214,12 @@
             <div class="row mt-3">
                 <!-- 下面一个大的div -->
                 <div class="col-12">
-                    <div class="p-3 border bg-light fixed-height" id="explorer_grid">大的 div</div>
+                    <div class="p-3 border bg-light " id="explorer_grid"></div>
                 </div>
             </div>
         </div>
-    
-    
-    
+
+
     </div>
     <div id="pattern" class="container-md" style="margin-top: 25px; display: none">
         <h2><strong>Typologies</strong></h2>
@@ -224,7 +227,7 @@
             typologies
             of requirement, data, and solution for visual analytics.</p>
         <h5>Requirement Typology</h5>
-        <style type="text/css">
+<!--       <style type="text/css">
             .tg {
                 border-collapse: collapse;
                 border-spacing: 0;
@@ -294,7 +297,7 @@
                 text-align: left;
                 vertical-align: top
             }
-        </style>
+        </style> -->
         <table class="tg" style="margin-left: 5%;">
             <thead>
                 <tr>
@@ -346,7 +349,7 @@
         <div id="requirement_typology"></div>
 
         <h5>Data Typology</h5>
-        <style type="text/css">
+<!--      <style type="text/css">
             .tg {
                 border-collapse: collapse;
                 border-spacing: 0;
@@ -413,7 +416,7 @@
                 text-align: left;
                 vertical-align: top
             }
-        </style>
+        </style> -->
         <table class="tg" style="margin-left: 20%;">
             <thead>
                 <tr>
@@ -488,7 +491,7 @@
         <div id="data_typology"></div>
 
         <h5>Solution Typology</h5>
-        <style type="text/css">
+<!--        <style type="text/css">
             .tg {
                 border-collapse: collapse;
                 border-spacing: 0;
@@ -561,7 +564,7 @@
                 text-decoration: underline;
                 vertical-align: top
             }
-        </style>
+        </style> -->
         <table class="tg">
             <thead>
                 <tr>
@@ -663,22 +666,7 @@
         <iframe src="https://1drv.ms/x/c/34baa5519e6793c3/IQNA2WJi881NTrTu77MnD1giAZLVimYlk3SLO1-Eah004yk" width="100%"
             height="1000" frameborder="0" scrolling="no"></iframe>
     </div>
-    <script>
-        function setEqualDimensions() {
-            console.log(
-                'x'
-            )
-            var width = $('#explorerContainerPar').width();
-            console.log(width)
-            $('#explorerContainerPar').css('height', width > 100 ? width : 720);
-            $('#explorerFilterPar').css('height', width > 100 ? width : 720);
-        }
 
-
-        window.onload = function () {
-            setEqualDimensions();
-        };
-    </script>
     <script src="./script/net_work_cal.js"></script>
     <script src="https://d3js.org/d3-queue.v3.min.js"></script>
 </body>
