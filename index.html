@@ -15,11 +15,15 @@
     <link rel="apple-touch-icon" sizes="144x144" href="static/favicon/icon_144x144.png">
     <link rel="stylesheet" href="css/bootstrap.css" />
     <link rel="stylesheet" href="css/tooltip.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid.min.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid-theme.min.css" />
+
 
     <script src="js/marked.min.js"></script>
     <script src="js/reorder.js"></script>
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="js/d3.v7.js"></script>
+        <script type="text/javascript" src="js/jsgrid.min.js"></script>
     <script>
         function loadMarkdownFile() {
             fetch('static/about.md')
@@ -32,7 +36,7 @@
                 .then(response => response.text())
                 .then(markdown => {
                     const html = marked.parse(markdown);
-                    document.getElementById('explore').innerHTML = html;
+                    document.getElementById('explore_md').innerHTML = html;
                 });
             fetch('static/requirement_typology.md')
                 .then(response => response.text())
@@ -63,6 +67,62 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UPDDP</title>
+    <style>
+        .fixed-height {
+            height: 500px;
+        }
+    
+        .fixed-width {
+            width: 500px;
+        }
+    
+        .full-height {
+            height: 100%;
+        }
+    
+        .full-width {
+            width: 50%;
+        }
+    
+        .semi-width {
+            width: 100%;
+        }
+    
+        .divider {
+            display: flex;
+            align-items: center;
+        }
+    
+        .icon {
+            margin-right: 10px;
+            /* 调整图标与分割线之间的间距 */
+            font-size: 20px;
+            /* 调整图标大小 */
+            /* 或者使用图片作为图标 */
+            /* background-image: url('path/to/your/icon.png'); */
+            width: 20px;
+            height: 20px;
+            /* background-size: contain; */
+            /* background-repeat: no-repeat; */
+        }
+    
+        hr {
+            flex-grow: 1;
+            border: 0;
+            border-top: 1px solid #000;
+            /* 分割线样式 */
+        }
+    
+        .no-padding {
+            padding: 0%;
+            border: 0;
+            margin: 0
+        }
+    
+        .jsgrid-cell {
+            word-wrap: break-word;
+        }
+    </style>
 </head>
 
 <body onload="loadMarkdownFile()">
@@ -106,10 +166,62 @@
     <div id="about" class="container-md" style="margin-top: 25px;"></div>
     <!--<div id="about" style="text-align: center; width: 1100px; margin: 25px auto 0px auto; display: table-cell; vertical-align: middle;">
     -->
-    <div id="explore" class="container-md" style="margin-top: 25px; display: none"></div>
+    <div id="explore" class="container-md" style="margin-top: 25px; display: none">
+        <div id="explore_md" class="container-md"></div>
+        <div class="container">
+            <div class="row">
+                <!-- 上面的两个并列的div -->
+                <div class="col-md-4" id="explorerFilterPar">
+                    <div class="p-3 border bg-light full-height semi-width" style="overflow: scroll;">
+                        <div class="container no-padding">
+    
+                            <div class="divider">
+                                <img src="./static/favicon/reqIcon.png" class="icon" />
+                                <hr>
+                            </div>
+                            <ul id="selectedReq"></ul>
+                            <button id="addRequirementBtn" class="btn btn-primary mb-3">Add Requirement</button>
+                            <div id="requirementContainer" class="mb-3"></div>
+                            <div class="divider">
+                                <img src="./static/favicon/dataIcon.png" class="icon" />
+                                <hr>
+                            </div>
+                            <ul id="selectedData"></ul>
+                            <button id="addDataBtn" class="btn btn-primary mb-3">Add Data Constrain</button>
+                            <div id="dataContainer" class="mb-3"></div>
+    
+                            <div class="divider">
+                                <img src="./static/favicon/solIcon.png" class="icon" />
+                                <hr>
+                            </div>
+                            <ul id="selectedSol"></ul>
+                            <button id="addSolBtn" class="btn btn-primary mb-3">Add Solution</button>
+                            <div id="solContainer" class="mb-3"></div>
+    
+                            <button id="resetBtn" class="btn btn-primary mb-3">Reset</button>
+                        </div>
+                    </div>
+    
+                </div>
+                <div class="col-md-8" id="explorerContainerPar">
+                    <div class="p-3 border  bg-light full-height semi-width " id="explorerContainer"></div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <!-- 下面一个大的div -->
+                <div class="col-12">
+                    <div class="p-3 border bg-light fixed-height" id="explorer_grid">大的 div</div>
+                </div>
+            </div>
+        </div>
+    
+    
+    
+    </div>
     <div id="pattern" class="container-md" style="margin-top: 25px; display: none">
         <h2><strong>Typologies</strong></h2>
-        <p>During our coding process for our process, we iteractively refined existing typologies to derive typologies
+        <p>During our coding process for our process, we iteractively refined existing typologies to derive
+            typologies
             of requirement, data, and solution for visual analytics.</p>
         <h5>Requirement Typology</h5>
         <style type="text/css">
@@ -543,6 +655,7 @@
                 </tr>
             </tbody>
         </table>
+
         <div id="solution_typology"></div>
     </div>
     <div id="corpus" class="container-md" style="margin-top: 25px; display: none">
@@ -550,6 +663,22 @@
         <iframe src="https://1drv.ms/x/c/34baa5519e6793c3/IQNA2WJi881NTrTu77MnD1giAZLVimYlk3SLO1-Eah004yk" width="100%"
             height="1000" frameborder="0" scrolling="no"></iframe>
     </div>
+    <script>
+        function setEqualDimensions() {
+            console.log(
+                'x'
+            )
+            var width = $('#explorerContainerPar').width();
+            console.log(width)
+            $('#explorerContainerPar').css('height', width > 100 ? width : 720);
+            $('#explorerFilterPar').css('height', width > 100 ? width : 720);
+        }
+
+
+        window.onload = function () {
+            setEqualDimensions();
+        };
+    </script>
     <script src="./script/net_work_cal.js"></script>
     <script src="https://d3js.org/d3-queue.v3.min.js"></script>
 </body>

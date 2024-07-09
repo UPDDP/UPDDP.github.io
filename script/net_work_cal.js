@@ -1,4 +1,394 @@
 let filter_list = []
+const REQUIREMENTOPTIONSLIST = [
+  "discover_observation",
+  "describe_observation_item",
+  "describe_observation_aggregate",
+  "identify_main_cause_item",
+  "identify_main_cause_aggregate",
+  "collect_evidence",
+  "compare_entities",
+  "explain_differences",
+  "evaluate_hypothesis",
+  "knowledge_injection",
+  "sharing_findings",
+  "parameter_setting",
+  "data_filtering",
+  "modeling_and_enhancement",
+  "flexibility_and_scalability",
+  "interactivity",
+  "ensuring_data_quality"
+]
+const DATAOPTIONSLIST = [
+  "tables",
+  "network_and_trees",
+  "fields",
+  "geometry",
+  "clusters_and_sets_and_lists",
+  "textual",
+  "temporal",
+  "media",
+  "categorical",
+  "ordinal",
+  "quantitative",
+  "parameter",
+  "sequential",
+  "diverging",
+  "cyclic"
+]
+
+const SOLOPTIONSLIST = [
+  "real_time_input",
+  "user_input",
+  "algorithmic_calculation",
+  "modeling",
+  "clustering_and_grouping",
+  "excluding",
+  "sampling",
+  "dimensionality_reduction",
+  "feature_selection",
+  "retrieval",
+  "similarity_calculation",
+  "explainability",
+  "rectification",
+  "parameter_tuning",
+  "wrangling",
+  "repetition",
+  "mirror",
+  "stack",
+  "co_axis",
+  "coordinate",
+  "annotation",
+  "large_panel",
+  "nesting",
+  "aligned",
+  "flexible",
+  "basics",
+  "filtering",
+  "selecting",
+  "abstract_elaborate",
+  "overview_and_explore",
+  "connect_relate",
+  "reconfigure",
+  "encode",
+  "history",
+  "extraction_of_features",
+  "participation_collaboration",
+  "gamification",
+  "table",
+  "bar",
+  "text",
+  "network",
+  "contour",
+  "arc",
+  "image",
+  "area",
+  "tree",
+  "circle",
+  "parallelcoordinates",
+  "scatter",
+  "donut",
+  "boxplot",
+  "glyph",
+  "heatmap",
+  "video",
+  "link",
+  "line",
+  "vector",
+  "pie",
+  "matrix",
+  "map",
+  "radar",
+  "hexagonarea",
+  "3Dstructure",
+  "sankey",
+  "flow",
+  "bubble",
+  "icicle",
+  "radialbar",
+  "animation",
+  "rectangle",
+  "chord",
+  "others",
+  "stripe",
+  "point",
+  "wordcloud",
+  "treemap",
+  "violet_graph"
+]
+
+// Upd filter List
+let upd_filter_list = (filter_list) => {
+  let selectedFilters = $("#selectedReq")
+  selectedFilters.empty()
+  filter_list
+    .filter((d) => d.type == "requirement")
+    .forEach((iter) => {
+      const li = document.createElement("li")
+      li.textContent = iter.key_word_list[0]
+      selectedFilters.append(li)
+    })
+  selectedFilters = $("#selectedData")
+  selectedFilters.empty()
+  filter_list
+    .filter((d) => d.type == "data")
+    .forEach((iter) => {
+      const li = document.createElement("li")
+      li.textContent = iter.key_word_list[0]
+      selectedFilters.append(li)
+    })
+  selectedFilters = $("#selectedSol")
+  selectedFilters.empty()
+  filter_list
+    .filter((d) => d.type == "solution")
+    .forEach((iter) => {
+      const li = document.createElement("li")
+      li.textContent = iter.key_word_list[0]
+      selectedFilters.append(li)
+    })
+}
+
+// Req Btn
+document.addEventListener("DOMContentLoaded", function () {
+  const addFilterBtn = document.getElementById("addRequirementBtn")
+  const filtersContainer = document.getElementById("requirementContainer")
+  const selectedFilters = document.getElementById("selectedReq")
+
+  addFilterBtn.addEventListener("click", function () {
+    addFilterReq()
+  })
+
+  function addFilterReq() {
+    const filterDiv = document.createElement("div")
+    filterDiv.className = "tooltip-container mb-2 selector"
+    const tooltipContent = document.createElement("div")
+    tooltipContent.className = "tooltip-content"
+
+    const select = document.createElement("select")
+    select.className = "form-control  mb-2"
+    select.innerHTML = REQUIREMENTOPTIONSLIST.map(
+      (option) => `<option value="${option}">${option}</option>`
+    ).join("")
+    tooltipContent.appendChild(select)
+
+    const confirmBtn = document.createElement("button")
+    confirmBtn.className = "btn btn-primary"
+    confirmBtn.textContent = "Confirm"
+    confirmBtn.addEventListener("click", function () {
+      updateSelectedFiltersReq(select)
+      filterDiv.remove()
+    })
+    if ($("#requirementContainer").children().length == 0) {
+      tooltipContent.appendChild(confirmBtn)
+      filterDiv.appendChild(tooltipContent)
+      filtersContainer.appendChild(filterDiv)
+    }
+  }
+
+  function updateSelectedFiltersReq(select) {
+    selectedFilters.innerHTML = ""
+
+    const selects = filtersContainer.querySelectorAll("select")
+
+    selects.forEach((select) => {
+      Array.from(select.selectedOptions).forEach((option) => {
+        if (
+          filter_list.filter((d) => d.type == "requirement").length ==
+          REQUIREMENTOPTIONSLIST.length
+        ) {
+          filter_list = filter_list.filter((d) => d.type != "requirement")
+        }
+        if (
+          filter_list.filter((d) => d.key_word_list[0] == option.value)
+            .length == 0
+        ) {
+          filter_list.push({
+            type: "requirement",
+            key_word_list: [option.value],
+            is_exclude: false,
+            is_pure: false
+          })
+        }
+      })
+    })
+    upd_filter_list(filter_list)
+    /*     filter_list
+      .filter((d) => d.type == "requirement")
+      .forEach((iter) => {
+        const li = document.createElement("li")
+        li.textContent = iter.key_word_list[0]
+        selectedFilters.appendChild(li)
+      }) */
+    draw_explorer_svg(filter_list)
+  }
+})
+
+// Data Btn
+document.addEventListener("DOMContentLoaded", function () {
+  const addFilterBtn = document.getElementById("addDataBtn")
+  const filtersContainer = document.getElementById("dataContainer")
+  const selectedFilters = document.getElementById("selectedData")
+
+  addFilterBtn.addEventListener("click", function () {
+    addFilterData()
+  })
+
+  function addFilterData() {
+    const filterDiv = document.createElement("div")
+    filterDiv.className = "tooltip-container mb-2 selector"
+    const tooltipContent = document.createElement("div")
+    tooltipContent.className = "tooltip-content"
+
+    const select = document.createElement("select")
+    select.className = "form-control  mb-2"
+    select.innerHTML = DATAOPTIONSLIST.map(
+      (option) => `<option value="${option}">${option}</option>`
+    ).join("")
+    tooltipContent.appendChild(select)
+
+    const confirmBtn = document.createElement("button")
+    confirmBtn.className = "btn btn-primary"
+    confirmBtn.textContent = "Confirm"
+    confirmBtn.addEventListener("click", function () {
+      updateSelectedFiltersData(select)
+      filterDiv.remove()
+    })
+    if ($("#dataContainer").children().length == 0) {
+      tooltipContent.appendChild(confirmBtn)
+      filterDiv.appendChild(tooltipContent)
+      filtersContainer.appendChild(filterDiv)
+    }
+  }
+
+  function updateSelectedFiltersData(select) {
+    selectedFilters.innerHTML = ""
+
+    const selects = filtersContainer.querySelectorAll("select")
+
+    selects.forEach((select) => {
+      Array.from(select.selectedOptions).forEach((option) => {
+        if (
+          filter_list.filter((d) => d.type == "data").length ==
+          REQUIREMENTOPTIONSLIST.length
+        ) {
+          filter_list = filter_list.filter((d) => d.type != "data")
+        }
+        if (
+          filter_list.filter((d) => d.key_word_list[0] == option.value)
+            .length == 0
+        ) {
+          filter_list.push({
+            type: "data",
+            key_word_list: [option.value],
+            is_exclude: false,
+            is_pure: false
+          })
+        }
+      })
+    })
+    upd_filter_list(filter_list)
+    /*     filter_list
+      .filter((d) => d.type == "data")
+      .forEach((iter) => {
+        const li = document.createElement("li")
+        li.textContent = iter.key_word_list[0]
+        selectedFilters.appendChild(li)
+      }) */
+    draw_explorer_svg(filter_list)
+  }
+})
+
+// Sol Btn
+document.addEventListener("DOMContentLoaded", function () {
+  const addFilterBtn = document.getElementById("addSolBtn")
+  const filtersContainer = document.getElementById("solContainer")
+  const selectedFilters = document.getElementById("selectedSol")
+
+  addFilterBtn.addEventListener("click", function () {
+    addFilterSol()
+  })
+
+  function addFilterSol() {
+    const filterDiv = document.createElement("div")
+    filterDiv.className = "tooltip-container mb-2 selector"
+    const tooltipContent = document.createElement("div")
+    tooltipContent.className = "tooltip-content"
+
+    const select = document.createElement("select")
+    select.className = "form-control  mb-2"
+    select.innerHTML = SOLOPTIONSLIST.map(
+      (option) => `<option value="${option}">${option}</option>`
+    ).join("")
+    tooltipContent.appendChild(select)
+
+    const confirmBtn = document.createElement("button")
+    confirmBtn.className = "btn btn-primary"
+    confirmBtn.textContent = "Confirm"
+    confirmBtn.addEventListener("click", function () {
+      updateSelectedFiltersSol(select)
+      filterDiv.remove()
+    })
+    if ($("#solContainer").children().length == 0) {
+      tooltipContent.appendChild(confirmBtn)
+
+      filterDiv.appendChild(tooltipContent)
+      filtersContainer.appendChild(filterDiv)
+    }
+  }
+
+  function updateSelectedFiltersSol(select) {
+    selectedFilters.innerHTML = ""
+
+    const selects = filtersContainer.querySelectorAll("select")
+    selects.forEach((select) => {
+      Array.from(select.selectedOptions).forEach((option) => {
+        if (
+          filter_list.filter((d) => d.type == "solution").length ==
+          REQUIREMENTOPTIONSLIST.length
+        ) {
+          filter_list = filter_list.filter((d) => d.type != "solution")
+        }
+        if (
+          filter_list.filter((d) => d.key_word_list[0] == option.value)
+            .length == 0
+        ) {
+          filter_list.push({
+            type: "solution",
+            key_word_list: [option.value],
+            is_exclude: false,
+            is_pure: false,
+            position: d3.filter(filter_list, (d) => d.type == "solution").length
+          })
+        }
+      })
+    })
+    upd_filter_list(filter_list)
+    /*     filter_list
+      .filter((d) => d.type == "solution")
+      .forEach((iter) => {
+        const li = document.createElement("li")
+        li.textContent = iter.key_word_list[0]
+        selectedFilters.appendChild(li)
+      }) */
+    draw_explorer_svg(filter_list)
+  }
+})
+
+// Reset Btn
+document.addEventListener("DOMContentLoaded", function () {
+  const resetBtn = document.getElementById("resetBtn")
+
+  resetBtn.addEventListener("click", function () {
+    reset_btn()
+  })
+
+  function reset_btn() {
+    filter_list = []
+    $("#selectedReq").empty()
+    $("#selectedData").empty()
+    $("#selectedSol").empty()
+    draw_explorer_svg(filter_list)
+  }
+})
 
 init_edge = (id, node, scale_set) => {
   node
@@ -27,11 +417,101 @@ init_edge = (id, node, scale_set) => {
     })
 }
 
+data_2_grid = (data) => {
+  let grid_data = []
+  let grid_fields = []
+  grid_fields.push({
+    name: "ID",
+    title: "ID",
+    type: "number",
+    width: 50
+  })
+  grid_fields.push({
+    name: "title",
+    type: "text",
+    title: "Paper Title",
+    width: 400
+  })
+  grid_fields.push({
+    name: "pubYear",
+    type: "text",
+    title: "Pub Year",
+    width: 70
+  })
+  grid_fields.push({
+    name: "domain",
+    type: "text",
+    title: "Domain",
+    width: 200
+  })
+  grid_fields.push({
+    name: "req",
+    type: "text",
+    title: "Requirement",
+    width: 400
+  })
+  grid_fields.push({
+    name: "reqType",
+    type: "text",
+    title: "Requirement Code",
+    width: 200
+  })
+  grid_fields.push({
+    name: "data",
+    type: "text",
+    title: "Data",
+    width: 400
+  })
+  grid_fields.push({
+    name: "dataType",
+    type: "text",
+    title: "Data Codes",
+    width: 200
+  })
+  let sol_length = d3.max(data, (d) => d.solution.length)
+  for (let i = 0; i < sol_length; i++) {
+    grid_fields.push({
+      name: `sol${i}`,
+      type: "text",
+      title: `Solution ${i}`,
+      width: 400
+    })
+    grid_fields.push({
+      name: `solType${i}`,
+      type: "text",
+      title: `Solution Code ${i}`,
+      width: 200
+    })
+  }
+  data.forEach((d, index) => {
+    let iter = {}
+    iter["ID"] = d.index_original
+    iter["title"] = d.paper_title
+    iter["pubYear"] = d.pub_year
+    iter["domain"] = d.domain
+    iter["req"] = d.requirement.requirement_text
+    iter["reqType"] = Object.keys(d.requirement.requirement_code).join(";")
+    iter["data"] = d.data.data_text
+    iter["dataType"] = Object.keys(d.data.data_code).join(";")
+    for (let i = 0; i < d.solution.length; i++) {
+      iter[`sol${i}`] = d.solution[i].solution_text
+      iter[`solType${i}`] = d.solution[i].componenet_code[0]
+    }
+    for (let i = d.solution.length; i < sol_length; i++) {
+      iter[`sol${i}`] = ""
+      iter[`solType${i}`] = ""
+    }
+    grid_data.push(iter)
+  })
+  return { grid_data: grid_data, grid_fields: grid_fields }
+}
+
 init_node = (id, node, scale_set, simulation) => {
   node
     .attr("d", (d) => path_form(d.group, scale_set.linear_node_size(d.weight)))
     .attr("fill", (d) => scale_set.color_node_type(d.group))
-    .attr("class", (d) => `node node_${d.id}`)
+    .attr("class", (d) => `node`)
+    .attr("id", (d) => `node_${d.id}`)
     .attr("stroke", "white")
     .attr("stroke-width", 2)
 }
@@ -162,8 +642,7 @@ add_tool_tip = (id, d, x, y, type) => {
     .style("padding", "5px")
     .html(tooltip_html(id, d, type))
     .style("left", x + 70 + "px")
-    .style("top", y + 400 + "px")
-    
+    .style("top", y + 0 + "px")
 }
 
 tooltip_html = (id, d, type) => {
@@ -174,18 +653,18 @@ tooltip_html = (id, d, type) => {
     case "link":
       switch (id) {
         case "#explore":
-       
-          if("pattern_specify" in d){
+          if ("pattern_specify" in d) {
             return `This link is from ${d.source.id} to ${d.target.id} <br/> Weight: ${d.weight}<br/> Pattern: ${d.pattern_specify}`
+          } else {
+            return `This link is from ${d.source.id} to ${d.target.id} <br/> Weight: ${d.weight}`
           }
-else{            return `This link is from ${d.source.id} to ${d.target.id} <br/> Weight: ${d.weight}`
-}
         case "#pattern":
-          if("pattern_specify" in d){
+          if ("pattern_specify" in d) {
             return `This link is from ${d.source} to ${d.target} <br/> Weight: ${d.weight}<br/> Pattern: ${d.pattern_specify}`
+          } else {
+            return `This link is from ${d.source} to ${d.target} <br/> Weight: ${d.weight}`
           }
-else{          return `This link is from ${d.source} to ${d.target} <br/> Weight: ${d.weight}`
-} }
+      }
 
       break
     default:
@@ -785,20 +1264,27 @@ function tabExplore() {
   document.getElementsByClassName("nav-link")[2].classList.remove("active")
   document.getElementsByClassName("nav-link")[3].classList.remove("active")
   document.getElementsByClassName("nav-link")[1].classList.add("active")
+  draw_explorer_svg([])
+}
 
+draw_explorer_svg = (filter_list = []) => {
+  var width = $("#explorerContainerPar").width()
+  console.log(width)
+  $("#explorerContainerPar").css("height", width > 100 ? width : 720)
+  $("#explorerFilterPar").css("height", width > 100 ? width : 720)
   Promise.all([
     d3.json("./static/data.json"),
     d3.json("./static/requirement_topo.json"),
     d3.json("./static/data_topo.json"),
     d3.json("./static/sol_topo.json")
   ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
-    d3.select("#explore").select("svg").remove()
+    d3.select("#explorerContainer").select("svg").remove()
     let draw_force = (
       data_original,
       req_topo,
       data_topo,
       sol_topo,
-      filter_list = []
+      filter_list
     ) => {
       let topo_combination = topo_building(req_topo, data_topo, sol_topo)
 
@@ -829,19 +1315,18 @@ function tabExplore() {
         .scaleLinear()
         .domain(d3.extent(node_list, (d) => d.weight))
         .range([100, 1600])
-      let main_svg = d3.select("#explore").append("svg")
-      let width = 1000
-      let height = 1000
-      main_svg
-        .attr("width", width)
-        .attr("height", height)
-        .attr("width", width)
-        .attr("height", height)
-        .style("border", "solid")
+      let main_svg = d3
+        .select("#explorerContainer")
+        .append("svg")
+        .attr("id", "explorerSvg")
+      let width = $("#explorerContainer").width()
+      let height = $("#explorerContainer").height()
+      main_svg.attr("width", width).attr("height", height)
+      /*       .style("border", "solid")
         .style("border-width", "2px")
         .style("border-radius", "5px")
-        .style("border-color", "grey")
-        .style("margin-left", "10%")
+        .style("border-color", "grey") */
+      //.style("margin-left", "10%")
 
       let simulation = (d3.simulation = d3
         .forceSimulation()
@@ -852,10 +1337,11 @@ function tabExplore() {
         )
         .force("charge", d3.forceManyBody().strength(-800))
         .force("x", d3.forceX())
-        .force("y", d3.forceY())).force(
-        "center",
-        d3.forceCenter(width / 2, height / 2)
-      )
+        .force("y", d3.forceY()))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .alpha(1)
+        .alphaDecay(0.05)
+        .alphaMin(0.01)
 
       const link = main_svg
         .append("g")
@@ -895,7 +1381,7 @@ function tabExplore() {
         .join("defs")
       init_marker("#explore", marker, scale_set)
 
-      const node = main_svg
+      let node = main_svg
         .append("g")
         .attr("class", "nodes")
         .selectAll(".node")
@@ -905,8 +1391,10 @@ function tabExplore() {
       init_node("#explore", node, scale_set, simulation)
       simulation.on("tick", () => {
         link.attr("d", link_path)
-
         node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
+        if (simulation.alpha() < 0.1) {
+          simulation.stop()
+        }
       })
 
       function dragstarted(event) {
@@ -924,7 +1412,9 @@ function tabExplore() {
       // Restore the target alpha so the simulation cools after dragging ends.
       // Unfix the subject position now that it’s no longer being dragged.
       function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0)
+        if (!event.active) {
+          simulation.alphaTarget(0)
+        }
         event.subject.fx = null
         event.subject.fy = null
       }
@@ -981,6 +1471,51 @@ function tabExplore() {
             .on("end", dragended)
         )
       // Add a drag behavior.
+      if (filter_list.length != 0) {
+        upd_force(
+          data_original,
+          req_topo,
+          data_topo,
+          sol_topo,
+          filter_list,
+          simulation
+        )
+      } else {
+        simulation.stop()
+        Promise.all([
+          d3.csv("./static/preNode.csv"),
+          d3.csv("./static/preLine.csv")
+        ]).then(([preNode, preLine]) => {
+          let preNodeObject = {}
+          preNode.forEach((d) => {
+            preNodeObject[d.id] = d
+          })
+          let preLineObject = {}
+          preLine.forEach((d) => {
+            preLineObject[d.id] = d
+          })
+
+          link.attr("d", (d) => {
+            d.source.x = +preNodeObject[`node_${d.source.id}`].X
+            d.source.y = +preNodeObject[`node_${d.source.id}`].Y
+            d.target.x = +preNodeObject[`node_${d.target.id}`].X
+            d.target.y = +preNodeObject[`node_${d.target.id}`].Y
+            return preLineObject[`Topo_line_${d.source.id}_${d.target.id}`].D
+          })
+          node.attr("transform", (d) => {
+            d.x = +preNodeObject[`node_${d.id}`].X
+            d.y = +preNodeObject[`node_${d.id}`].Y
+
+            return (
+              "translate(" +
+              +preNodeObject[`node_${d.id}`].X +
+              "," +
+              +preNodeObject[`node_${d.id}`].Y +
+              ")"
+            )
+          })
+        })
+      }
     }
 
     let upd_force = (
@@ -999,6 +1534,7 @@ function tabExplore() {
         true,
         true
       )
+
       //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
       //gaoshh1
       let node_list = topo_combination.all_list.map((d) => ({ ...d }))
@@ -1030,27 +1566,7 @@ function tabExplore() {
           (d) => `${d.source.id}_${d.target.id}_${d.is_directional}`
         )
         .join("path")
-      /*       .attr(
-        "class",
-        (d) =>
-          `lines Topo_line_target_${d.target.id} Topo_line_source_${d.source.id}`
-      )
-      .attr("id", (d) => `Topo_line_${d.source.id}_${d.target.id}`)
-      .attr("stroke", link_color)
-      .attr("stroke-width", (d) => Math.sqrt(d.weight))
-      .attr("fill", "none")
-      .attr("isCalled", "false")
-      .attr("d", (d) => linkArc(d))
-      .attr("marker-end", (d) => {
-        if (d.is_directional == 1) {
-          return `url(${new URL(
-            `#Topo_arrow_${d.source.id}_${d.target.id}`,
-            location
-          )})`
-        } else {
-        }
-      }) */
-      //
+
       let marker = main_svg.select(".marker").selectAll("defs")
       //.data(all_all_list)
       //.join("defs")
@@ -1067,7 +1583,12 @@ function tabExplore() {
       link.selectAll("path").attr("d", link_path)
       simulation.on("tick", () => {
         link.selectAll("path").attr("d", link_path)
-        node   .selectAll(".node").attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
+        node
+          .selectAll(".node")
+          .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
+        if (simulation.alpha() < 0.1) {
+          simulation.stop()
+        }
       })
       // Reheat the simulation when drag starts, and fix the subject position.
       function dragstarted(event) {
@@ -1154,12 +1675,40 @@ function tabExplore() {
             .on("end", dragended)
         )
       // Add a drag behavior.
+      filtered_data = data_process(data_original, filter_list)
+
+      let gridCom = data_2_grid(filtered_data)
+
+      $("#explorer_grid").jsGrid({
+        height: "100%",
+        width: "100%",
+        paging: true,
+        pageSize: 15,
+        pageButtonCount: 5,
+        pagerContainer: "#externalPager",
+        pagerFormat:
+          "current page: {pageIndex} &nbsp;&nbsp; {first} {prev} {pages} {next} {last} &nbsp;&nbsp; total pages: {pageCount}",
+        pagePrevText: "<",
+        pageNextText: ">",
+        pageFirstText: "<<",
+        pageLastText: ">>",
+        pageNavigatorNextText: "&#8230;",
+        pageNavigatorPrevText: "&#8230;",
+
+        sorting: true,
+        paging: true,
+
+        data: gridCom.grid_data,
+
+        fields: gridCom.grid_fields
+      })
+      upd_filter_list(filter_list)
     }
 
-    draw_force(data_original, req_topo, data_topo, sol_topo, [])
-
+    draw_force(data_original, req_topo, data_topo, sol_topo, filter_list)
   })
 }
+
 function tabPattern() {
   document.getElementById("about").style.display = "none"
   document.getElementById("explore").style.display = "none"
@@ -1170,100 +1719,6 @@ function tabPattern() {
   document.getElementsByClassName("nav-link")[2].classList.remove("active")
   document.getElementsByClassName("nav-link")[3].classList.remove("active")
   document.getElementsByClassName("nav-link")[2].classList.add("active")
-
-  // Promise.all([
-  //   d3.json("./static/data.json"),
-  //   d3.json("./static/requirement_topo.json"),
-  //   d3.json("./static/data_topo.json"),
-  //   d3.json("./static/sol_topo.json")
-  // ]).then(([data_original, req_topo, data_topo, sol_topo]) => {
-  //   let topo_combination = topo_building(req_topo, data_topo, sol_topo)
-
-  //   let all_all_list = upd_all_all_list(
-  //     data_original,
-  //     topo_combination,
-  //     [],
-  //     false,
-  //     true
-  //   )
-  //   //all_all_list = d3.filter(all_all_list, (d) => d.source == d.target)
-  //   let node_list = topo_combination.all_list.map((d) => ({ ...d }))
-
-  //   all_all_list = d3.filter(all_all_list, (d) => d.is_directional == 1)
-  //   all_all_list = link_complement(all_all_list, topo_combination.all_list)
-
-  //   node_list_reorder = d3.map(node_list, (d, index) => {
-  //     return { name: d.id, weight: +0, index: +index }
-  //   })
-  //   all_all_list_reorder = d3.map(all_all_list, (original, index) => {
-  //     return {
-  //       source: d3.filter(
-  //         node_list_reorder,
-  //         (d) => d.name == original.source
-  //       )[0], //{ name: d.source, weight: +0 },
-  //       target: d3.filter(
-  //         node_list_reorder,
-  //         (d) => d.name == original.target
-  //       )[0],
-  //       value: original.weight,
-  //       index: +index,
-  //       distance: +0
-  //     }
-  //   })
-
-  //   var graph = reorder
-  //     .graph()
-  //     .nodes(node_list_reorder)
-  //     .links(all_all_list_reorder)
-  //     .init()
-  //   let dist_adjacency
-  //   const leafOrder = reorder
-  //     .optimal_leaf_order()
-  //     .distance(reorder.distance["manhattan"])
-  //   function computeLeaforder() {
-  //     const adjacency = reorder.graph2mat(graph)
-  //     return leafOrder(adjacency)
-  //   }
-  //   function computeRCM() {
-  //     return reorder.reverse_cuthill_mckee_order(graph)
-  //   }
-  //   let new_order = computeLeaforder()
-  //   new_order = Array.from(Array(topo_combination.all_list.length - 1).keys())
-  //   let scale_set = scale_set_create(topo_combination, all_all_list)
-  //   let scale_opacity = d3.scaleLog(
-  //     d3.extent(all_all_list, (d) => d.weight + 1),
-  //     [0, 1]
-  //   )
-  //   let main_svg = d3.select("#pattern").append("svg")
-  //   let width = 1000
-  //   let height = 1000
-  //   main_svg
-  //     .attr("width", width)
-  //     .attr("height", height)
-  //     .attr("width", width)
-  //     .attr("height", height)
-  //   main_svg
-  //     .append("g")
-  //     .attr("class", "matrix_1")
-  //     .selectAll("rect")
-  //     .data(all_all_list)
-  //     .join("rect")
-  //     .attr("x", (d) => new_order[scale_set.all_ordinal(d.target)] * 10 + 1)
-  //     .attr("y", (d) => new_order[scale_set.all_ordinal(d.source)] * 10 + 1)
-  //     .attr("id", (d) => `rect_${d.source}_${d.target}`)
-  //     .attr("width", 8)
-  //     .attr("height", 8)
-  //     .attr("fill", "red")
-  //     .attr("opacity", (d) => scale_opacity(+d.weight + 1))
-  //     .attr("stroke", "grey")
-  //     .on("mouseover", (event, d) => {
-  //       d3.select(`#rect_${d.source}_${d.target}`).attr("fill", "blue")
-  //       add_tool_tip("#pattern", d, event.clientX, event.clientY, "link")
-  //     })
-  //     .on("mouseout", (event, d) => {
-  //       d3.select("#pattern").select("#custom_tooltip").remove()
-  //     })
-  // })
 }
 
 function tabCorpus() {
@@ -1277,8 +1732,6 @@ function tabCorpus() {
   document.getElementsByClassName("nav-link")[2].classList.remove("active")
   document.getElementsByClassName("nav-link")[3].classList.remove("active")
   document.getElementsByClassName("nav-link")[3].classList.add("active")
-
-
 }
 
 dict2list = (dict) => {
@@ -1373,7 +1826,7 @@ scale_set_create = (topo_combination, all_all_list) => {
     .range(Array.from(Array(topo_combination.all_list.length - 1).keys()))
   scale_set["all_linear_range"] = d3
     .scaleLog()
-    .domain([0,d3.max(all_all_list, (d) => d.weight + 1)])
+    .domain([0, d3.max(all_all_list, (d) => d.weight + 1)])
     .range([0, 1])
   scale_set["color_node_type"] = d3
     .scaleOrdinal()
@@ -1386,7 +1839,7 @@ scale_set_create = (topo_combination, all_all_list) => {
     .range(["#2ca02c", "#2ca02c", "#2ca02c", "#2ca02c", "#2ca02c"])
   scale_set["weight"] = d3
     .scaleLinear()
-    .domain([0,d3.max(all_all_list, (d) => d.weight)])
+    .domain([0, d3.max(all_all_list, (d) => d.weight)])
     .range([1, 10])
 
   return scale_set
@@ -1663,3 +2116,4 @@ sol_iter_pure = (d, key_word_list, position) => {
   }
   return data_set
 }
+

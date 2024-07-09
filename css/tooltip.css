@@ -4,3 +4,11 @@
     --bs-tooltip-bg: var(--bd-violet-bg);
     --bs-tooltip-color: var(--bs-white);
 }
+.selector {
+    z-index: 1000;
+    position: relative;
+}
+
+.filteror {
+    overflow: auto;
+}
