@@ -92,6 +92,7 @@
         .divider {
             display: flex;
             align-items: center;
+
         }
 
         .icon {
@@ -119,9 +120,14 @@
             border: 0;
             margin: 0
         }
-        .jsgrid-cell, .jsgrid-header-cell {
-            height: 40px; /* 你可以根据需要调整高度 */
-            overflow:scroll;
+
+
+        .jsgrid-cell {
+            overflow: auto;
+            /* 当内容超出时，显示滚动条 */
+            white-space: pre;
+
+            height: 48px;
         }
     </style>
 </head>
@@ -201,8 +207,10 @@
                             <ul id="selectedSol"></ul>
 
                             <div id="solContainer" class="mb-3"></div>
-                            <button id="confirmBtn" class="btn btn-primary mb-3">Confirm</button>
-                            <button id="resetBtn" class="btn btn-primary mb-3">Reset</button>
+                            <div class="divider">
+                                <button id="confirmBtn" class="btn border btn-primary mb-3">Confirm</button>
+                                <button id="resetBtn" class="btn border btn-primary mb-3">Reset</button>
+                            </div>
                         </div>
                     </div>
 
@@ -227,7 +235,7 @@
             typologies
             of requirement, data, and solution for visual analytics.</p>
         <h5>Requirement Typology</h5>
-<!--       <style type="text/css">
+        <style type="text/css">
             .tg {
                 border-collapse: collapse;
                 border-spacing: 0;
@@ -297,7 +305,7 @@
                 text-align: left;
                 vertical-align: top
             }
-        </style> -->
+        </style>
         <table class="tg" style="margin-left: 5%;">
             <thead>
                 <tr>
@@ -349,7 +357,7 @@
         <div id="requirement_typology"></div>
 
         <h5>Data Typology</h5>
-<!--      <style type="text/css">
+        <style type="text/css">
             .tg {
                 border-collapse: collapse;
                 border-spacing: 0;
@@ -416,7 +424,7 @@
                 text-align: left;
                 vertical-align: top
             }
-        </style> -->
+        </style>
         <table class="tg" style="margin-left: 20%;">
             <thead>
                 <tr>
@@ -491,7 +499,7 @@
         <div id="data_typology"></div>
 
         <h5>Solution Typology</h5>
-<!--        <style type="text/css">
+        <style type="text/css">
             .tg {
                 border-collapse: collapse;
                 border-spacing: 0;
@@ -564,7 +572,7 @@
                 text-decoration: underline;
                 vertical-align: top
             }
-        </style> -->
+        </style>
         <table class="tg">
             <thead>
                 <tr>

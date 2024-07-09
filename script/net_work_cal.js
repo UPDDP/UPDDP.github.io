@@ -270,7 +270,6 @@ document.addEventListener("DOMContentLoaded", function () {
     //    updateSelectedFiltersReq(select)
   })
   if ($("#requirementContainer").children().length == 0) {
-    tooltipContent.appendChild(confirmBtn)
     filterDiv.appendChild(tooltipContent)
     filtersContainer.appendChild(filterDiv)
   }
@@ -338,7 +337,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // updateSelectedFiltersData(select)
   })
   if ($("#dataContainer").children().length == 0) {
-    tooltipContent.appendChild(confirmBtn)
     filterDiv.appendChild(tooltipContent)
     filtersContainer.appendChild(filterDiv)
   }
@@ -407,7 +405,6 @@ document.addEventListener("DOMContentLoaded", function () {
     //updateSelectedFiltersSol(select)
   })
   if ($("#solContainer").children().length == 0) {
-    tooltipContent.appendChild(confirmBtn)
     filterDiv.appendChild(tooltipContent)
     filtersContainer.appendChild(filterDiv)
   }
