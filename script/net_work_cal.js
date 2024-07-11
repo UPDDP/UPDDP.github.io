@@ -715,8 +715,8 @@ add_tool_tip = (id, d, x, y, type) => {
     .style("border-radius", "5px")
     .style("padding", "5px")
     .html(tooltip_html(id, d, type))
-    .style("left", x + 70 + "px")
-    .style("top", y + 0 + "px")
+    .style("left", x + 50 + "px")
+    .style("top", y + 100 + "px")
 }
 
 tooltip_html = (id, d, type) => {

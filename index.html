@@ -129,6 +129,29 @@
 
             height: 48px;
         }
+
+        .divider_two {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #confirmBtn {
+            width: 50%;
+            /* 调整宽度 */
+            border: 10px solid;
+            margin-right: 5px;
+            /* 调整边框厚度 */
+        }
+
+        #resetBtn {
+            margin-left: 5px;
+            /* 调整宽度 */
+            border: 10px solid;
+            margin-left: 20px;
+
+            /* 调整边框厚度 */
+        }
     </style>
 </head>
 
@@ -207,7 +230,7 @@
                             <ul id="selectedSol"></ul>
 
                             <div id="solContainer" class="mb-3"></div>
-                            <div class="divider">
+                            <div class="divider_two">
                                 <button id="confirmBtn" class="btn border btn-primary mb-3">Confirm</button>
                                 <button id="resetBtn" class="btn border btn-primary mb-3">Reset</button>
                             </div>
