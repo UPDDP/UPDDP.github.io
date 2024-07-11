@@ -9,3 +9,5 @@ We adopted the following criteria to select 220 qualified research corpus from I
 - ..provided clear illustration of data,
 - ..used clear statements of requirements or their equivalents,
 - ..mapped solutions to requirements clearly and accurately.
+
+PS: It may take a few seconds to load the live table from Onedrive↓.

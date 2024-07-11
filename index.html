@@ -25,45 +25,10 @@
     <script src="js/d3.v7.js"></script>
     <script type="text/javascript" src="js/jsgrid.min.js"></script>
     <script>
-        function loadMarkdownFile() {
-            fetch('static/about.md')
-                .then(response => response.text())
-                .then(markdown => {
-                    console.log(markdown)
-                    const html = marked.parse(markdown);
-                    document.getElementById('about').innerHTML = html;
-                });
-            fetch('static/explorer.md')
-                .then(response => response.text())
-                .then(markdown => {
-                    const html = marked.parse(markdown);
-                    document.getElementById('explore_md').innerHTML = html;
-                });
-            fetch('static/requirement_typology.md')
-                .then(response => response.text())
-                .then(markdown => {
-                    const html = marked.parse(markdown);
-                    document.getElementById('requirement_typology').innerHTML = html;
-                });
-            fetch('static/data_typology.md')
-                .then(response => response.text())
-                .then(markdown => {
-                    const html = marked.parse(markdown);
-                    document.getElementById('data_typology').innerHTML = html;
-                });
-            fetch('static/solution_typology.md')
-                .then(response => response.text())
-                .then(markdown => {
-                    const html = marked.parse(markdown);
-                    document.getElementById('solution_typology').innerHTML = html;
-                });
-            fetch('static/corpus_text.md')
-                .then(response => response.text())
-                .then(markdown => {
-                    const html = marked.parse(markdown);
-                    document.getElementById('corpus_text').innerHTML = html;
-                });
-        }
+
+
+
+
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -125,8 +90,8 @@
         .jsgrid-cell {
             overflow: auto;
             /* 当内容超出时，显示滚动条 */
-            white-space: pre;
-
+            white-space: nowrap;
+            word-break: keep-all;
             height: 48px;
         }
 
@@ -155,7 +120,7 @@
     </style>
 </head>
 
-<body onload="loadMarkdownFile()">
+<body>
     <nav class="navbar navbar-expand-lg bg-body-tertiary bg-dark" data-bs-theme="dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
@@ -193,7 +158,9 @@
             </div>
         </div>
     </nav>
-    <div id="about" class="container-md" style="margin-top: 25px;"></div>
+    <div>
+        <div id="about" class="container-md" style="margin-top: 25px;"></div>
+    </div>
     <!--<div id="about" style="text-align: center; width: 1100px; margin: 25px auto 0px auto; display: table-cell; vertical-align: middle;">
     -->
     <div id="explore" class="container-md" style="margin-top: 25px; display: none">

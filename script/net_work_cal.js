@@ -116,6 +116,57 @@ const SOLOPTIONSLIST = [
   "violet_graph"
 ]
 
+$("#about").ready(() => {
+  fetch("static/about.md")
+    .then((response) => response.text())
+    .then((markdown) => {
+      const html = marked.parse(markdown)
+      document.getElementById("about").innerHTML = html
+    })
+  console.log("loadAboutMarkdown")
+})
+
+$("#explore_md").ready(() => {
+  fetch("static/explorer.md")
+    .then((response) => response.text())
+    .then((markdown) => {
+      const html = marked.parse(markdown)
+      document.getElementById("explore_md").innerHTML = html
+    })
+})
+
+$("#pattern").ready(() => {
+  fetch("static/requirement_typology.md")
+    .then((response) => response.text())
+    .then((markdown) => {
+      const html = marked.parse(markdown)
+      document.getElementById("requirement_typology").innerHTML = html
+    })
+  fetch("static/data_typology.md")
+    .then((response) => response.text())
+    .then((markdown) => {
+      const html = marked.parse(markdown)
+      document.getElementById("data_typology").innerHTML = html
+    })
+  fetch("static/solution_typology.md")
+    .then((response) => response.text())
+    .then((markdown) => {
+      const html = marked.parse(markdown)
+      document.getElementById("solution_typology").innerHTML = html
+    })
+})
+
+$("#corpus_text").ready(() => {
+  fetch("static/corpus_text.md")
+    .then((response) => response.text())
+    .then((markdown) => {
+      const html = marked.parse(markdown)
+      document.getElementById("corpus_text").innerHTML = html
+    })
+})
+
+
+
 // Upd filter List
 let upd_filter_list = (filter_list) => {
   let selectedFilters = $("#selectedReq")

@@ -8,5 +8,5 @@ We aggregated the solution paths from diverse visual analytics papers into a dir
 
 <img src="static\Legend.png" alt="Legend" style="margin-left: 20%; width:55%;" />
 
-PS: Since the graph is dense, it may take a few seconds to load and stabilize the graph↓.
+
 
