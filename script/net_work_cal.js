@@ -176,6 +176,7 @@ let upd_filter_list = (filter_list) => {
     .forEach((iter) => {
       const li = document.createElement("li")
       li.textContent = iter.key_word_list[0]
+      li.className = "filteredList"
       selectedFilters.append(li)
     })
   selectedFilters = $("#selectedData")
@@ -185,6 +186,8 @@ let upd_filter_list = (filter_list) => {
     .forEach((iter) => {
       const li = document.createElement("li")
       li.textContent = iter.key_word_list[0]
+      li.className = "filteredList"
+
       selectedFilters.append(li)
     })
   selectedFilters = $("#selectedSol")
@@ -194,6 +197,8 @@ let upd_filter_list = (filter_list) => {
     .forEach((iter) => {
       const li = document.createElement("li")
       li.textContent = iter.key_word_list[0]
+      li.className = "filteredList"
+
       selectedFilters.append(li)
     })
 }
