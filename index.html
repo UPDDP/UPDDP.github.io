@@ -121,6 +121,18 @@
         .filteredList {
             font-size: 20px;
         }
+
+        .filterRowReq {
+            height: 25%;
+        }
+
+        .filterRowData {
+            height: 32%;
+        }
+
+        .filterRowSol {
+            height: 33%;
+        }
     </style>
 </head>
 
@@ -174,40 +186,42 @@
                 <!-- 上面的两个并列的div -->
                 <div class="col-md-4" id="explorerFilterPar">
                     <div class="p-3 border bg-light full-height semi-width" style="overflow: scroll;">
-                        <div class="container no-padding">
 
+                        <div class="filterRowReq">
                             <div class="divider">
                                 <img src="./static/favicon/reqIcon.png" class="icon" />
                                 <h4>Requirement</h4>
                                 <hr>
                             </div>
-
-                            <!--        <button id="addRequirementBtn" class="btn btn-primary mb-3">Add Requirement</button> -->
                             <div id="requirementContainer" class="mb-3"></div>
                             <ul id="selectedReq"></ul>
+                        </div>
+                        
+                        <div class="filterRowData">
                             <div class="divider">
                                 <img src="./static/favicon/dataIcon.png" class="icon" />
                                 <h4>Data</h4>
                                 <hr>
                             </div>
-
-
                             <div id="dataContainer" class="mb-3"></div>
                             <ul id="selectedData"></ul>
+                        </div>
+                        
+                        <div class="filterRowSol">
                             <div class="divider">
                                 <img src="./static/favicon/solIcon.png" class="icon" />
                                 <h4>Solution</h4>
                                 <hr>
                             </div>
-
-
                             <div id="solContainer" class="mb-3"></div>
                             <ul id="selectedSol"></ul>
-                            <div class="divider_two">
-                                <button id="confirmBtn" class="btn border btn-primary mb-3">Confirm</button>
-                                <button id="resetBtn" class="btn border btn-primary mb-3">Reset</button>
-                            </div>
                         </div>
+
+                        <div class="divider_two">
+                            <button id="confirmBtn" class="btn border btn-primary mb-3">Confirm</button>
+                            <button id="resetBtn" class="btn border btn-primary mb-3">Reset</button>
+                        </div>
+
                     </div>
 
                 </div>

@@ -165,8 +165,6 @@ $("#corpus_text").ready(() => {
     })
 })
 
-
-
 // Upd filter List
 let upd_filter_list = (filter_list) => {
   let selectedFilters = $("#selectedReq")
@@ -540,7 +538,8 @@ init_edge = (id, node, scale_set) => {
       }
     })
     .on("mouseover", (event, d) => {
-      add_tool_tip(id, d, event.clientX, event.clientY, "link")
+      console.log(event)
+      add_tool_tip("#explore", d, event.pageX, event.pageY, "link")
     })
     .on("mouseout", (event, d) => {
       d3.select("#explore").select("#custom_tooltip").remove()
@@ -771,8 +770,8 @@ add_tool_tip = (id, d, x, y, type) => {
     .style("border-radius", "5px")
     .style("padding", "5px")
     .html(tooltip_html(id, d, type))
-    .style("left", x + 50 + "px")
-    .style("top", y + 100 + "px")
+    .style("left", x + 20 + "px")
+    .style("top", y + 10 + "px")
 }
 
 tooltip_html = (id, d, type) => {
@@ -1572,7 +1571,7 @@ draw_explorer_svg = () => {
           )
         })
         .on("mouseover", (event, d) => {
-          add_tool_tip("#explore", d, event.clientX, event.clientY, "node")
+          add_tool_tip("#explore", d, event.pageX, event.pageY, "node")
         })
         .on("mouseout", (event, d) => {
           d3.select("#explore").select("#custom_tooltip").remove()
@@ -1768,7 +1767,7 @@ draw_explorer_svg = () => {
           )
         })
         .on("mouseover", (event, d) => {
-          add_tool_tip("#explore", d, event.clientX, event.clientY, "node")
+          add_tool_tip("#explore", d, event.pageX, event.pageY, "node")
         })
         .on("mouseout", (event, d) => {
           d3.select("#explore").select("#custom_tooltip").remove()
