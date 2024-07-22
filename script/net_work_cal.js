@@ -17,7 +17,8 @@ const REQUIREMENTOPTIONSLIST = [
   "flexibility_and_scalability",
   "interactivity",
   "ensuring_data_quality"
-]
+].sort()
+
 const DATAOPTIONSLIST = [
   "tables",
   "network_and_trees",
@@ -34,7 +35,7 @@ const DATAOPTIONSLIST = [
   "sequential",
   "diverging",
   "cyclic"
-]
+].sort()
 
 const SOLOPTIONSLIST = [
   "real_time_input",
@@ -114,8 +115,7 @@ const SOLOPTIONSLIST = [
   "wordcloud",
   "treemap",
   "violet_graph"
-]
-
+].sort()
 $("#about").ready(() => {
   fetch("static/about.md")
     .then((response) => response.text())
@@ -123,7 +123,6 @@ $("#about").ready(() => {
       const html = marked.parse(markdown)
       document.getElementById("about").innerHTML = html
     })
-  console.log("loadAboutMarkdown")
 })
 
 $("#explore_md").ready(() => {
@@ -538,7 +537,6 @@ init_edge = (id, node, scale_set) => {
       }
     })
     .on("mouseover", (event, d) => {
-      console.log(event)
       add_tool_tip("#explore", d, event.pageX, event.pageY, "link")
     })
     .on("mouseout", (event, d) => {
@@ -597,7 +595,9 @@ data_2_grid = (data) => {
     title: "Data Codes",
     width: 200
   })
-  let sol_length = d3.max(data, (d) => d.solution.length)
+  let sol_length = d3.max(data, (d) =>
+    d3.sum(d.solution, (d) => d.componenet_code.length)
+  )
   for (let i = 0; i < sol_length; i++) {
     grid_fields.push({
       name: `sol${i}`,
@@ -622,13 +622,17 @@ data_2_grid = (data) => {
     iter["reqType"] = Object.keys(d.requirement.requirement_code).join(";")
     iter["data"] = d.data.data_text
     iter["dataType"] = Object.keys(d.data.data_code).join(";")
+    index_sol = 0
     for (let i = 0; i < d.solution.length; i++) {
-      iter[`sol${i}`] = d.solution[i].solution_text
-      iter[`solType${i}`] = d.solution[i].componenet_code[0]
+      for (let j = 0; j < d.solution[i].componenet_code.length; j++) {
+        iter[`sol${index_sol}`] = d.solution[i].solution_text
+        iter[`solType${index_sol}`] = d.solution[i].componenet_code[j]
+        index_sol += 1
+      }
     }
-    for (let i = d.solution.length; i < sol_length; i++) {
-      iter[`sol${i}`] = ""
-      iter[`solType${i}`] = ""
+    for (; index_sol < sol_length; index_sol++) {
+      iter[`sol${index_sol}`] = ""
+      iter[`solType${index_sol}`] = ""
     }
     grid_data.push(iter)
   })
@@ -1080,6 +1084,7 @@ upd_all_all_list = (
   let data = data_process(data_original, filter_dict)
 
   let topo = edge_building_matrix_paper(data, topo_combination)
+
   return link_building(topo, is_filter_zero_weight_link, is_category)
 }
 
@@ -1262,6 +1267,7 @@ edge_building_matrix_paper = (data, topo) => {
   data = structuredClone(data)
   for (let index = 0; index < data.length; index++) {
     let data_iter = data[index]
+
     if (last_title != data_iter.paper_title) {
       // Deal with combine
 
@@ -1399,7 +1405,7 @@ function tabExplore() {
 
 draw_explorer_svg = () => {
   var width = $("#explorerContainerPar").width()
-  console.log(width)
+
   $("#explorerContainerPar").css("height", width > 100 ? width : 720)
   $("#explorerFilterPar").css("height", width > 100 ? width : 720)
   Promise.all([
@@ -1584,7 +1590,6 @@ draw_explorer_svg = () => {
             .on("end", dragended)
         )
       // Add a drag behavior.
-      console.log(filter_list)
       if (filter_list.length != 0) {
         upd_force(
           data_original,
@@ -1639,8 +1644,6 @@ draw_explorer_svg = () => {
       filter_list = [],
       simulation
     ) => {
-      console.log(filter_list)
-      console.log("up")
       let topo_combination = topo_building(req_topo, data_topo, sol_topo)
       let all_all_list = upd_all_all_list(
         data_original,
@@ -1793,7 +1796,6 @@ draw_explorer_svg = () => {
       filtered_data = data_process(data_original, filter_list)
 
       let gridCom = data_2_grid(filtered_data)
-      console.log(gridCom)
       $("#explorer_grid").jsGrid({
         height: "700",
         width: "100%",
@@ -1807,9 +1809,7 @@ draw_explorer_svg = () => {
         data: gridCom.grid_data,
 
         fields: gridCom.grid_fields,
-        onRefreshed: function (args) {
-          console.log(args.grid)
-        }
+        onRefreshed: function (args) {}
       })
       d3.selectAll(".jsgrid-cell").attr("height", "10px")
       upd_filter_list(filter_list)
