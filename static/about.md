@@ -30,8 +30,6 @@
  <span> ShanghaiTech University</span>
 </div>
 
-<br>
-
 
 <br>
 
